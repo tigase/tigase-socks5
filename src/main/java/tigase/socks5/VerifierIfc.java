@@ -4,14 +4,23 @@
  */
 package tigase.socks5;
 
+import java.util.Map;
+import tigase.db.TigaseDBException;
+
 /**
  *
  * @author andrzej
  */
 public interface VerifierIfc {
 
-        public boolean isAllowed(Stream stream);
+        void setProxyComponent(Socks5ProxyComponent proxyComponent);
+
+        Map<String,Object> getDefaults();
+        
+        void setProperties(Map<String,Object> props);
+        
+        boolean isAllowed(Stream stream) throws TigaseDBException;
    
-        public boolean checkLimit(Stream stream);
+        void updateTransfer(Socks5IOService service, boolean force) throws TigaseDBException, QuotaException;
         
 }

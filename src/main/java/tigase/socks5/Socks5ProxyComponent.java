@@ -1,8 +1,11 @@
 package tigase.socks5;
 
+import tigase.db.TigaseDBException;
+import tigase.socks5.repository.Socks5Repository;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +18,8 @@ import tigase.cluster.api.ClusterCommandException;
 import tigase.cluster.api.ClusterControllerIfc;
 import tigase.cluster.api.ClusteredComponentIfc;
 import tigase.cluster.api.CommandListener;
+import tigase.db.UserRepository;
+import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.util.Algorithms;
 import tigase.util.DNSEntry;
@@ -22,8 +27,10 @@ import tigase.util.DNSResolver;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
+import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
 import tigase.xmpp.PacketErrorTypeException;
+import tigase.xmpp.StanzaType;
 
 public class Socks5ProxyComponent extends Socks5ConnectionManager implements ClusteredComponentIfc {
 
@@ -33,9 +40,17 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 	
         private static final String PACKET_FORWARD_CMD = "packet-forward";       
         
-        private static final String VERIFIER_CLASS_KEY = "verifier-class";
-        private static final String VERIFIER_CLASS_VAL = "tigase.socks5.verifiers.DummyVerifier";
+        private static final String PARAMS_REPO_URL = "repo-url";
+        private static final String PARAMS_REPO_NODE = "repo-params";
+        private static final String PARAMS_VERIFIER_NODE = "verifier-params";
         
+        private static final String VERIFIER_CLASS_KEY = "verifier-class";
+        private static final String VERIFIER_CLASS_VAL = "tigase.socks5.verifiers.LimitsVerifier";
+        
+        private static final String SOCKS5_REPOSITORY_CLASS_KEY = "socks5-repo-cls";
+        private static final String SOCKS5_REPOSITORY_CLASS_VAL = "tigase.socks5.repository.JDBCSocks5Repository";
+        
+        private Socks5Repository socks5_repo = null;
         private VerifierIfc verifier = null;
         
         private ClusterControllerIfc clusterController = null;
@@ -43,74 +58,88 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 	
 	@Override
 	public void processPacket(Packet packet) {
-                if(packet.getElement().getChild("query", XMLNS_BYTESTREAMS) != null) {
-                        if (log.isLoggable(Level.FINEST)) {
-                                log.log(Level.FINEST, "processing bytestream query packet = {0}", packet);
+                try {
+
+                        if (packet.getElement().getChild("query", XMLNS_BYTESTREAMS) != null) {
+                                if (log.isLoggable(Level.FINEST)) {
+                                        log.log(Level.FINEST, "processing bytestream query packet = {0}", packet);
+                                }
+
+                                Element query = packet.getElement().getChild("query");
+                                if (query.getChild("activate") == null) {
+                                        try {
+                                                String jid = packet.getStanzaTo().getBareJID().toString();
+                                                String hostname = getComponentId().getDomain();
+                                                DNSEntry[] entries = DNSResolver.getHostSRV_Entries(hostname);
+
+                                                // Generate list of streamhosts
+                                                List<Element> children = new LinkedList<Element>();
+                                                for (DNSEntry entry : entries) {
+                                                        int[] ports = getPorts();
+                                                        for (int port : ports) {
+                                                                Element streamhost = new Element("streamhost");
+                                                                streamhost.setAttribute("jid", jid);
+                                                                streamhost.setAttribute("host", entry.getIp());
+                                                                streamhost.setAttribute("port", String.valueOf(port));
+                                                                children.add(streamhost);
+                                                        }
+                                                }
+                                                //Collections.reverse(children);
+                                                query.addChildren(children);
+
+                                                addOutPacket(packet.okResult(query, 0));
+                                        }
+                                        catch (UnknownHostException e) {
+                                                addOutPacket(packet.errorResult("cancel", null, "internal-server-error", "Address of streamhost not found", false));
+                                        }
+                                }
+                                else {
+                                        String sid = query.getAttribute("sid");
+                                        if (sid != null) {
+                                                // Generate stream unique id
+                                                String cid = createConnId(sid, packet.getStanzaFrom().toString(), query.getCData("/query/activate"));
+                                                if (cid == null) {
+                                                        addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
+                                                }
+
+                                                Stream stream = getStream(cid);
+                                                if (stream != null) {
+                                                        stream.setRequester(packet.getStanzaFrom());
+                                                        stream.setTarget(JID.jidInstance(query.getCData("/query/activate")));
+                                                        if (!verifier.isAllowed(stream)) {
+                                                                stream.close();
+                                                                addOutPacket(packet.errorResult("cancel", null, "not-allowed", null, false));
+                                                                return;
+                                                        }
+
+                                                        // Let's try to activate stream
+                                                        if (!stream.activate()) {
+                                                                stream.close();
+                                                                addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
+                                                                return;
+                                                        }
+
+                                                        addOutPacket(packet.okResult((Element) null, 0));
+                                                }
+                                                else if (!sendToNextNode(packet)) {
+                                                        addOutPacket(packet.errorResult("cancel", null, "item-not-found", null, true));
+                                                }
+                                        }
+                                        else {
+                                                addOutPacket(packet.errorResult("cancel", null, "bad-request", null, false));
+                                        }
+                                }
                         }
-                                
-			Element query = packet.getElement().getChild("query");
-			if(query.getChild("activate") == null) {
-				try {
-					String jid = packet.getStanzaTo().getBareJID().toString();
-                                        String hostname = getComponentId().getDomain();
-					DNSEntry[] entries = DNSResolver.getHostSRV_Entries(hostname);
-                                        
-                                        // Generate list of streamhosts
-					List<Element> children = new LinkedList<Element>();
-					for(DNSEntry entry : entries) {						
-                                                int[] ports = getPorts();
-                                                for (int port : ports) {
-                                                        Element streamhost = new Element("streamhost");
-                                                        streamhost.setAttribute("jid", jid);
-                                                        streamhost.setAttribute("host", entry.getIp());
-                                                        streamhost.setAttribute("port", String.valueOf(port));
-                                                        children.add(streamhost);
-                                                }
-					}				
-					//Collections.reverse(children);
-					query.addChildren(children);
-                                        
-					addOutPacket(packet.okResult(query, 0));
-				} catch (UnknownHostException e) {
-					addOutPacket(packet.errorResult("cancel", null, "internal-server-error", "Address of streamhost not found", false));
-				}
-			}
-			else {
-				String sid = query.getAttribute("sid");
-				if(sid != null) {
-                                        // Generate stream unique id
-					String cid = createConnId(sid, packet.getStanzaFrom().toString(), query.getCData("/query/activate"));
-					if(cid == null) {
-						addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
-					}
-                                        
-					Stream stream = getStream(cid);
-					if(stream != null) {
-                                                if (!verifier.isAllowed(stream)){
-                                                     addOutPacket(packet.errorResult("cancel", null, "not-allowed", null, false));
-                                                     return;
-                                                }
-                                                
-                                                // Let's try to activate stream
-						if(!stream.activate()) {
-							addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
-                                                        return;
-						}
-                                                
-						addOutPacket(packet.okResult((Element)null, 0));
-					}       
-					else if(!sendToNextNode(packet)) {
-						addOutPacket(packet.errorResult("cancel", null, "item-not-found", null, true));
-					}
-				}
-				else {
-					addOutPacket(packet.errorResult("cancel", null, "bad-request", null, false));
-				}
-			}
-		}
-		else {
-			addOutPacket(packet.errorResult("cancel", 400, "feature-not-implemented", null, false));
-		}
+                        else {
+                                addOutPacket(packet.errorResult("cancel", 400, "feature-not-implemented", null, false));
+                        }
+                }
+                catch (Exception ex) {
+                        if (log.isLoggable(Level.FINE)) {
+                                log.log(Level.FINE, "exception while processing packet = "+packet, ex);
+                        }
+                        addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
+                }
 	}
 	
         /**
@@ -161,12 +190,50 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 		return "Socks5 Bytestreams Service";
 	}
 		        
+        @Override
+        public boolean serviceStopped(Socks5IOService<?> serv) {
+                try {
+                        verifier.updateTransfer(serv, true);
+                }
+                catch (TigaseDBException ex) {
+                        log.log(Level.WARNING, "problem during accessing database ", ex);
+                }
+                catch (QuotaException ex) {
+                        if (log.isLoggable(Level.FINEST)) {
+                                log.log(Level.FINEST, ex.getMessage(), ex);
+                        }
+                }
+                
+                return super.serviceStopped(serv);
+        }
         
+        @Override
+        public void socketDataProcessed(Socks5IOService service) {
+                try {
+                        verifier.updateTransfer(service, false);
+                        super.socketDataProcessed(service);
+                }
+                catch (Socks5Exception ex) {
+                        if (log.isLoggable(Level.FINEST)) {
+                                log.log(Level.FINEST, "stopping service after exception from verifier: " + ex.getMessage());
+                        }                        
+                        
+                        //@todo send error
+                        Packet message = Message.getMessage(getComponentId(), service.getJID(), StanzaType.error, ex.getMessage(), null, null, null);                        
+                        this.addOutPacket(message);
+                        
+                        service.forceStop();
+                }                
+                catch (TigaseDBException ex) {
+                        Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+        }
+                
         @Override
         public Map<String, Object> getDefaults(Map<String, Object> params) {
                 Map<String,Object> props = super.getDefaults(params);
-                
-                props.put(VERIFIER_CLASS_KEY, VERIFIER_CLASS_VAL);                
+                         
+                props.put(VERIFIER_CLASS_KEY, VERIFIER_CLASS_VAL);                                
                 
                 return props;
         }
@@ -175,6 +242,47 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 	@SuppressWarnings("unchecked")
 	public void setProperties(Map<String,Object> props) {
 		super.setProperties(props);
+
+                if (props.size() == 1) {
+                        // We do not support single property change
+                        return;
+                }
+                
+                String socks5RepoCls = (String) props.get(SOCKS5_REPOSITORY_CLASS_KEY);
+                if (socks5RepoCls == null) {
+                        socks5RepoCls = SOCKS5_REPOSITORY_CLASS_VAL;
+                }
+                try {
+                        String connectionString = (String) props.get(PARAMS_REPO_URL);
+                        
+                        if (connectionString == null) {
+                                UserRepository user_repo = (UserRepository) props.get(SHARED_USER_REPO_PROP_KEY);
+                                
+                                if (user_repo != null) {
+                                        connectionString = user_repo.getResourceUri();
+                                }
+                        }
+                        
+                        Map<String,String> params = new HashMap<String,String>(10);
+
+                        for (Map.Entry<String,Object> entry : props.entrySet()) {
+                                if (entry.getKey().startsWith(PARAMS_REPO_NODE)) {
+                                        String[] nodes = entry.getKey().split("/");
+                                        
+                                        if (nodes.length > 1) {
+                                                params.put(nodes[1], entry.getValue().toString());
+                                        }
+                                }
+                        }
+                        
+                        Socks5Repository socks5_repo = (Socks5Repository) Class.forName(socks5RepoCls).newInstance();
+                        
+                        socks5_repo.initRepository(connectionString, params);
+                        this.socks5_repo = socks5_repo;
+                }
+                catch (Exception ex) {
+			log.log(Level.SEVERE, "An error initializing data repository pool: ", ex);
+                }
                 
                 String verifierCls = (String) props.get(VERIFIER_CLASS_KEY);
                 if (verifierCls == null) {
@@ -183,14 +291,37 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 
                 try {
                         verifier = (VerifierIfc) Class.forName(verifierCls).newInstance();
+                        
+                        Map<String,Object> params = verifier.getDefaults();
+                        for (Map.Entry<String,Object> entry : props.entrySet()) {
+                                if (entry.getKey().startsWith(PARAMS_VERIFIER_NODE)) {
+                                        String[] nodes = entry.getKey().split("/");
+                                        
+                                        if (nodes.length > 1) {
+                                                params.put(nodes[1], entry.getValue());
+                                        }
+                                }
+                        }
+                        
+                        verifier.setProperties(params);
+                        verifier.setProxyComponent(this);
                 }
                 catch (Exception ex) {
                         Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 
-		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(), getDiscoCategory(), getDiscoCategoryType(), false, XMLNS_BYTESTREAMS);
+		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(), getDiscoCategory(), getDiscoCategoryType(), false, XMLNS_BYTESTREAMS);                
 	}
 
+        /**
+         * Return Socks5 repository
+         * 
+         * @return 
+         */
+        public Socks5Repository getSock5Repository() {
+                return socks5_repo;
+        }
+        
         /**
          * Handle connection of other node of cluster
          * 

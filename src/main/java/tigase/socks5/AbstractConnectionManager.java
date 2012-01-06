@@ -64,6 +64,7 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>> extends
                         log.log(Level.FINEST, "connection {0} started", serv.getUniqueId());
                 }
 
+                serv.setIOServiceListener((IOServiceListener) this);
                 services.put(serv.getUniqueId(), serv);
         }
         

@@ -52,11 +52,21 @@ public abstract class Socks5ConnectionManager extends AbstractConnectionManager<
          */
 	public void unregisterStream(Stream stream) {
 		streams.remove(stream.getSID());
+                
                 if (log.isLoggable(Level.FINER)) {
                         log.log(Level.FINER, "unregistered connections for stream = {0}", new Object[] { stream.toString() });
                 }
 	}
-        
+
+        /**
+         * Process stream after each time data from socket is processed
+         * 
+         * @param stream 
+         */
+        public void socketDataProcessed(Socks5IOService service) {
+                
+        }
+
 	/**
 	 * Generates the component statistics.
 	 * 

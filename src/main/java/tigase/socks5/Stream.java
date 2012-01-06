@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
 
 
 public class Stream {
@@ -13,7 +15,10 @@ public class Stream {
         
 	private final Socks5IOService[] conns = new Socks5IOService[2];
         private final Socks5ConnectionManager manager;
+        
 	private final String sid;
+        private JID requester = null;
+        private JID target = null;
         private final Map<String,Object> data;
 	
 	public Stream(String sid, Socks5ConnectionManager manager) {
@@ -30,7 +35,43 @@ public class Stream {
         public String getSID() {
 		return sid;
 	}
-	
+        
+        /**
+         * Set bare JID of requester
+         * 
+         * @param requester 
+         */
+        public void setRequester(JID requester) {
+                this.requester = requester;
+        }
+
+        /**
+         * Get bare JID of requester
+         * 
+         * @param requester 
+         */
+        public JID getRequester() {
+                return requester;
+        }
+
+        /**
+         * Set bare JID of target
+         * 
+         * @param requester 
+         */
+        public void setTarget(JID target) {
+                this.target = target;
+        }
+        
+        /**
+         * Get bare JID of target
+         * 
+         * @param requester 
+         */
+        public JID getTarget() {
+                return target;
+        }
+       	
         /**
          * Set stream data
          * 
@@ -59,11 +100,24 @@ public class Stream {
 	public void addConnection(Socks5IOService con) {
 		int i=0;
                 con.setStream(this);
-		if(conns[i] != null)
+		
+                if(conns[i] != null)
 			i++;
+                
+                con.setSocks5ConnectionType(i==1 ? Socks5ConnectionType.Requester : Socks5ConnectionType.Target);
 		conns[i] = con;
 	}
-	
+
+        /**
+         * Returns connection with specified type
+         * 
+         * @param connectionType
+         * @return 
+         */
+        public Socks5IOService getConnection(Socks5ConnectionType connectionType) {
+                return conns[connectionType == Socks5ConnectionType.Requester ? 1 : 0];
+        }
+        
         /**
          * Forward data to another service
          * 
@@ -82,7 +136,7 @@ public class Stream {
 //                if (log.isLoggable(Level.FINEST)) {
 //                        log.log(Level.FINEST, "writing data to connection = {0}", con);
 //                }
-                
+                                
 		con.writeBytes(buf);
 	}
 	
@@ -107,14 +161,15 @@ public class Stream {
                 int bytesRead = 0;
                 
                 manager.unregisterStream(this);
-                
+           
 		for(int i=0; i<conns.length; i++) {
-                        if (conns[i] != null) {
+                        //if (conns[i] != null) {
                                 bytesRead += conns[i].getBytesReceived();
-                                
-                                conns[i].stop();
-                        }
-			conns[i] = null;			
+                                if (!conns[i].waitingToSend()) {
+                                        conns[i].stop();
+                                }
+                        //}
+			//conns[i] = null;			
 		}
                 if (log.isLoggable(Level.FINE)) {
                         log.log(Level.FINE, "stream sid = {0} transferred {1} bytes", new Object[] { toString(), bytesRead });

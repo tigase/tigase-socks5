@@ -5,12 +5,13 @@ import java.nio.ByteBuffer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tigase.net.IOService;
+import tigase.xmpp.JID;
 
 /**
  * 
  * @author andrzej
  */
-public class Socks5IOService<IO> extends IOService<IO> {
+public class Socks5IOService<RefObject> extends IOService<RefObject> {
 
         private static final Logger log = Logger.getLogger(Socks5IOService.class.getCanonicalName());
 
@@ -27,6 +28,7 @@ public class Socks5IOService<IO> extends IOService<IO> {
         
         private State state = State.Welcome;
         private Stream stream;
+        private Socks5ConnectionType connectionType;
         private Socks5ConnectionManager manager;
         private int bytesReceived = 0;
         private int bytesSent = 0;
@@ -60,6 +62,15 @@ public class Socks5IOService<IO> extends IOService<IO> {
         }
 
         /**
+         * Returns jid of client connected by this service
+         * 
+         * @return 
+         */
+        public JID getJID() {
+                return this.connectionType == Socks5ConnectionType.Requester 
+                        ? stream.getRequester() : stream.getTarget();
+        }
+        /**
          * Returns current state of service
          * 
          * @return 
@@ -68,6 +79,24 @@ public class Socks5IOService<IO> extends IOService<IO> {
                 return state;
         }
 
+        /**
+         * Set Socks5 connection type (Requester or Target connection)
+         * 
+         * @param connectionType 
+         */
+        public void setSocks5ConnectionType(Socks5ConnectionType connectionType) {
+                this.connectionType = connectionType;
+        }
+        
+        /**
+         * Returns Socks5 connectionType (Requester/Target)
+         * 
+         * @return 
+         */
+        public Socks5ConnectionType getSocks5ConnectionType() {
+                return connectionType;
+        }
+        
         /**
          * Get all bytes received by this service
          * 
@@ -98,7 +127,7 @@ public class Socks5IOService<IO> extends IOService<IO> {
                 if (buf != null) {
                         bytesReceived += buf.remaining();
                 }
-
+                
                 return buf;
         }
 
@@ -107,15 +136,16 @@ public class Socks5IOService<IO> extends IOService<IO> {
                 if (buf != null) {
                         bytesSent += buf.remaining();
                 }
-
+                
                 super.writeBytes(buf);
         }
 
         @Override
         public void forceStop() {
-                if (stream != null) {
-                        Stream stream = this.stream;
-                        this.stream = null;
+                if (state != State.Closed) {
+                        //Stream stream = this.stream;
+                        //this.stream = nul;
+                        state = State.Closed;
                         stream.close();
                 }
 
@@ -203,6 +233,7 @@ public class Socks5IOService<IO> extends IOService<IO> {
                         buffer.clear();
                 }
 
+                manager.socketDataProcessed(this);
 //                else if (bytesRead == -1) {
 //                        if (stream != null) {
 //                                stream.close();

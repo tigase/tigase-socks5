@@ -140,17 +140,22 @@ public abstract class Socks5ConnectionManager extends AbstractConnectionManager<
                         if (serv == null) {
                                 return;
                         }
-                        
-                        if (serv.getState() != Socks5IOService.State.Active) {                                
-                                if (log.isLoggable(Level.FINER)) {
-                                        log.log(Level.FINER, "closing Socks5 connection not in active state with id  = {0}", serv.getUniqueId());
+
+                        try {
+                                if (serv.getState() != Socks5IOService.State.Active) {
+                                        if (log.isLoggable(Level.FINER)) {
+                                                log.log(Level.FINER, "closing Socks5 connection not in active state with id  = {0}", serv.getUniqueId());
+                                        }
+
+                                        services.remove(serv.getUniqueId());
+
+                                        if (serv.isConnected()) {
+                                                serv.stop();
+                                        }
                                 }
-                                
-                                services.remove(serv.getUniqueId());
-                                
-                                if (serv.isConnected()) {
-                                        serv.stop();
-                                }
+                        }
+                        catch (Exception ex) {
+                                log.log(Level.WARNING, "exception while checking for if service " + serv.getUniqueId() + " timed out before activation", ex);
                         }
                 }
                 

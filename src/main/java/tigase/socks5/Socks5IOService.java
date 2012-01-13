@@ -67,6 +67,9 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
          * @return 
          */
         public JID getJID() {
+                if (stream == null)
+                        return null;
+                
                 return this.connectionType == Socks5ConnectionType.Requester 
                         ? stream.getRequester() : stream.getTarget();
         }
@@ -146,7 +149,8 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                         //Stream stream = this.stream;
                         //this.stream = nul;
                         state = State.Closed;
-                        stream.close();
+                        if (stream != null)
+                                stream.close();
                 }
 
 //                try {

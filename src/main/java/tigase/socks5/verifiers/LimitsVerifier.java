@@ -18,6 +18,7 @@ import tigase.socks5.Stream;
 import tigase.socks5.VerifierIfc;
 import tigase.socks5.repository.Socks5Repository;
 import tigase.xmpp.BareJID;
+import tigase.xmpp.JID;
 
 /**
  *
@@ -74,6 +75,12 @@ public class LimitsVerifier implements VerifierIfc {
 
         @Override
         public void updateTransfer(Socks5IOService service, boolean force) throws TigaseDBException, QuotaException {
+                JID fullJID = service.getJID();
+                if (fullJID == null) {
+                        // someone closed connection without authentication done, so no JID
+                        return;
+                }
+                
                 BareJID jid = service.getJID().getBareJID();
                 String key = "limits-"+jid.toString();
                 Limits limits = (Limits) service.getSessionData().get(key);

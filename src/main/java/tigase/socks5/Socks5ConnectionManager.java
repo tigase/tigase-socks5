@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,6 +18,9 @@ public abstract class Socks5ConnectionManager extends AbstractConnectionManager<
 
 	private ConcurrentHashMap<String,Stream> streams = new ConcurrentHashMap<String,Stream>();
         
+        private AtomicLong kbytesTransferred = new AtomicLong(0);
+        private AtomicLong servicesCompleted = new AtomicLong(0);
+        
         @Override
         public void serviceStarted(Socks5IOService<?> serv) {
                 super.serviceStarted(serv);
@@ -25,7 +29,17 @@ public abstract class Socks5ConnectionManager extends AbstractConnectionManager<
                 
                 addTimerTask(new AuthenticationTimer(serv.getUniqueId()), STREAM_CREATION_TIMEOUT);
         }
+
+        @Override
+        public boolean serviceStopped(Socks5IOService<?> serv) {
+                long bytesTransferred = serv.getBytesReceived() + serv.getBytesSent();
                 
+                this.kbytesTransferred.addAndGet(bytesTransferred / 1024);
+                this.servicesCompleted.incrementAndGet();
+                
+                return super.serviceStopped(serv);
+        }
+        
         /**
          * Register stream by creating it and assigning connection to it
          * 
@@ -64,7 +78,7 @@ public abstract class Socks5ConnectionManager extends AbstractConnectionManager<
          * @param stream 
          */
         public void socketDataProcessed(Socks5IOService service) {
-                
+
         }
 
 	/**
@@ -77,7 +91,17 @@ public abstract class Socks5ConnectionManager extends AbstractConnectionManager<
 	public void getStatistics(StatisticsList list) {
 		super.getStatistics(list);
                 
+                long servicesCompleted = this.servicesCompleted.get();
+                long kbytesTransferred = this.kbytesTransferred.get();
+
 		list.add(getName(), "Open streams", streams.size(), Level.INFO);                
+                list.add(getName(), "KBytes tranferred", kbytesTransferred, Level.INFO);
+                list.add(getName(), "Transfers completed", servicesCompleted / 2, Level.INFO);
+     
+                if (servicesCompleted == 0) {
+                        servicesCompleted = 1;
+                }
+                list.add(getName(), "Average transfer size in KB", kbytesTransferred / servicesCompleted, Level.INFO);
 	}        
         
         /**

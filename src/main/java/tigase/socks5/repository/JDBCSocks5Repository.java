@@ -36,20 +36,22 @@ public class JDBCSocks5Repository implements Socks5Repository {
         private static final String DEF_TRANSFER_LIMITS_DOMAIN_KEY = "file-size-limit-domain";
         private static final String DEF_TRANSFER_LIMITS_USER_KEY = "file-size-limit-user";
         private static final String DEF_TRANSFER_USED_GENERAL_KEY = "transfer-used-general";
+        private static final String DEF_TRANSFER_USED_INSTANCE_KEY = "transfer-used-instance";
         private static final String DEF_TRANSFER_USED_DOMAIN_KEY = "transfer-used-domain";
         private static final String DEF_TRANSFER_USED_USER_KEY = "transfer-used-user";
         private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_KEY = "create-transfer-used-by-connection";
         private static final String DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_KEY = "update-transfer-used-by-connection";
         
-        private static final String DEF_CREATE_UID_QUERY = "{ call TigSocks5CreateUid(?) }";
+        private static final String DEF_CREATE_UID_QUERY = "{ call TigSocks5CreateUid(?, ?) }";
         private static final String DEF_GET_UID_QUERY = "{ call TigSocks5GetUid(?) }";
         private static final String DEF_TRANSFER_LIMITS_GENERAL_QUERY = "{ call TigSocks5GetTransferLimits(?) }";
         private static final String DEF_TRANSFER_LIMITS_DOMAIN_QUERY = "{ call TigSocks5GetTransferLimits(?) }";
         private static final String DEF_TRANSFER_LIMITS_USER_QUERY = "{ call TigSocks5GetTransferLimits(?) }";
-        private static final String DEF_TRANSFER_USED_GENERAL_QUERY = "{ call TigSocks5TransferUsedGeneral(?) }";
+        private static final String DEF_TRANSFER_USED_GENERAL_QUERY = "{ call TigSocks5TransferUsedGeneral() }";
+        private static final String DEF_TRANSFER_USED_INSTANCE_QUERY = "{ call TigSocks5TransferUsedInstance(?) }";
         private static final String DEF_TRANSFER_USED_DOMAIN_QUERY = "{ call TigSocks5TransferUsedDomain(?) }";
         private static final String DEF_TRANSFER_USED_USER_QUERY = "{ call TigSocks5TransferUsedUser(?) }";
-        private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY = "{ call TigSocks5CreateTransferUsed(?, ?) }";
+        private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY = "{ call TigSocks5CreateTransferUsed(?, ?, ?) }";
         private static final String DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY = "{ call TigSocks5UpdateTransferUsed(?, ?) }";
 
         protected DataRepository data_repo;
@@ -60,6 +62,7 @@ public class JDBCSocks5Repository implements Socks5Repository {
         private String transferLimitsDomain_query = null;
         private String transferLimitsUser_query = null;
         private String transferUsedGeneral_query = null;
+        private String transferUsedInstance_query = null;
         private String transferUsedDomain_query = null;
         private String transferUsedUser_query = null;
         private String createTransferUsedByConnection_query = null;
@@ -105,6 +108,12 @@ public class JDBCSocks5Repository implements Socks5Repository {
                                 data_repo.initPreparedStatement(transferUsedGeneral_query, transferUsedGeneral_query);
                         }
 
+                        transferUsedInstance_query = getParamWithDef(params, DEF_TRANSFER_USED_INSTANCE_KEY, DEF_TRANSFER_USED_INSTANCE_QUERY);
+
+                        if (transferUsedInstance_query != null) {
+                                data_repo.initPreparedStatement(transferUsedInstance_query, transferUsedInstance_query);
+                        }
+
                         transferUsedDomain_query = getParamWithDef(params, DEF_TRANSFER_USED_DOMAIN_KEY, DEF_TRANSFER_USED_DOMAIN_QUERY);
 
                         if (transferUsedDomain_query != null) {
@@ -147,8 +156,9 @@ public class JDBCSocks5Repository implements Socks5Repository {
                                 rs = transferLimitsGeneral.executeQuery();
 
                                 if (rs.next()) {
-                                        limits.setFilesizeLimit(rs.getLong(1));
-                                        limits.setTransferLimit(rs.getLong(2));
+                                        limits.setTransferLimitPerFile(rs.getLong(1));
+                                        limits.setTransferLimitPerUser(rs.getLong(2));
+                                        limits.setTransferLimitPerDomain(rs.getLong(3));
                                 }
                         }
                 }
@@ -180,8 +190,9 @@ public class JDBCSocks5Repository implements Socks5Repository {
                                 rs = transferLimitsDomain.executeQuery();
 
                                 if (rs.next()) {
-                                        limits.setFilesizeLimit(rs.getLong(1));
-                                        limits.setTransferLimit(rs.getLong(2));
+                                        limits.setTransferLimitPerFile(rs.getLong(1));
+                                        limits.setTransferLimitPerUser(rs.getLong(2));
+                                        limits.setTransferLimitPerDomain(rs.getLong(3));
                                 }
                         }
                 }
@@ -213,8 +224,9 @@ public class JDBCSocks5Repository implements Socks5Repository {
                                 rs = transferLimitsUser.executeQuery();
 
                                 if (rs.next()) {
-                                        limits.setFilesizeLimit(rs.getLong(1));
-                                        limits.setTransferLimit(rs.getLong(2));
+                                        limits.setTransferLimitPerFile(rs.getLong(1));
+                                        limits.setTransferLimitPerUser(rs.getLong(2));
+                                        limits.setTransferLimitPerDomain(rs.getLong(3));
                                 }
                         }
                 }
@@ -263,7 +275,39 @@ public class JDBCSocks5Repository implements Socks5Repository {
         }
 
         @Override
-        public long getTransferUsed(String domain) throws TigaseDBException {
+        public long getTransferUsedByInstance(String instance) throws TigaseDBException {
+                long transferUsed = 0;
+                ResultSet rs = null;
+
+                try {
+                        PreparedStatement transferUsedInstance = data_repo.getPreparedStatement(null, transferUsedInstance_query);
+
+                        synchronized (transferUsedInstance) {
+                                transferUsedInstance.setString(1, instance);
+
+                                rs = transferUsedInstance.executeQuery();
+
+                                if (rs.next()) {
+                                        transferUsed = rs.getLong(1);
+                                }
+                        }
+                }
+                catch (SQLIntegrityConstraintViolationException e) {
+                        throw new UserExistsException(
+                                "Error while adding user to repository, user exists?", e);
+                }
+                catch (SQLException e) {
+                        throw new TigaseDBException("Problem accessing repository.", e);
+                }
+                finally {
+                        data_repo.release(null, rs);
+                }
+
+                return transferUsed;
+        }
+        
+        @Override
+        public long getTransferUsedByDomain(String domain) throws TigaseDBException {
                 long transferUsed = 0;
                 ResultSet rs = null;
 
@@ -295,7 +339,7 @@ public class JDBCSocks5Repository implements Socks5Repository {
         }
 
         @Override
-        public long getTransferUsed(BareJID user) throws TigaseDBException {
+        public long getTransferUsedByUser(BareJID user) throws TigaseDBException {
                 long transferUsed = 0;
                 ResultSet rs = null;
 
@@ -329,7 +373,7 @@ public class JDBCSocks5Repository implements Socks5Repository {
         }
 
         @Override
-        public long createTransferUsedByConnection(BareJID user, Socks5ConnectionType type) throws TigaseDBException {
+        public long createTransferUsedByConnection(BareJID user, Socks5ConnectionType type, BareJID instance) throws TigaseDBException {
                 long connectionId = 0;
                 long uid = getUID(user);
                 ResultSet rs = null;
@@ -340,6 +384,7 @@ public class JDBCSocks5Repository implements Socks5Repository {
                         synchronized (createTransferUsedByConnection) {
                                 createTransferUsedByConnection.setLong(1, uid);
                                 createTransferUsedByConnection.setInt(2, type == Socks5ConnectionType.Requester ? 0 : 1);
+                                createTransferUsedByConnection.setString(3, instance.toString());
 
                                 rs = createTransferUsedByConnection.executeQuery();
 
@@ -439,7 +484,8 @@ public class JDBCSocks5Repository implements Socks5Repository {
 
                         synchronized (create_uid) {
                                 create_uid.setString(1, user.toString());
-
+                                create_uid.setString(2, user.getDomain());
+                                
                                 rs = create_uid.executeQuery();
 
                                 if (rs.next()) {

@@ -19,9 +19,10 @@ public interface Socks5Repository {
         Limits getTransferLimits(BareJID user_id) throws TigaseDBException;
 
         long getTransferUsed() throws TigaseDBException;
-        long getTransferUsed(String domain) throws TigaseDBException;
-        long getTransferUsed(BareJID user_id) throws TigaseDBException;
+        long getTransferUsedByInstance(String instance) throws TigaseDBException;
+        long getTransferUsedByDomain(String domain) throws TigaseDBException;
+        long getTransferUsedByUser(BareJID user_id) throws TigaseDBException;
         
-        long createTransferUsedByConnection(BareJID user_id, Socks5ConnectionType type) throws TigaseDBException;
+        long createTransferUsedByConnection(BareJID user_id, Socks5ConnectionType type, BareJID instance) throws TigaseDBException;
         void updateTransferUsedByConnection(long stream_id, long transferred_bytes) throws TigaseDBException;
 }

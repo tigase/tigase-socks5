@@ -243,72 +243,75 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 	public void setProperties(Map<String,Object> props) {
 		super.setProperties(props);
 
-                if (props.size() == 1) {
-                        // We do not support single property change
-                        return;
-                }
+                Map<String,Object> verifierProps = null;
                 
-                String socks5RepoCls = (String) props.get(SOCKS5_REPOSITORY_CLASS_KEY);
-                if (socks5RepoCls == null) {
-                        socks5RepoCls = SOCKS5_REPOSITORY_CLASS_VAL;
-                }
-                try {
-                        String connectionString = (String) props.get(PARAMS_REPO_URL);
-                        
-                        if (connectionString == null) {
-                                UserRepository user_repo = (UserRepository) props.get(SHARED_USER_REPO_PROP_KEY);
-                                
-                                if (user_repo != null) {
-                                        connectionString = user_repo.getResourceUri();
-                                }
+                if (props.size() > 1) {
+                        String socks5RepoCls = (String) props.get(SOCKS5_REPOSITORY_CLASS_KEY);
+                        if (socks5RepoCls == null) {
+                                socks5RepoCls = SOCKS5_REPOSITORY_CLASS_VAL;
                         }
-                        
-                        Map<String,String> params = new HashMap<String,String>(10);
+                        try {
+                                String connectionString = (String) props.get(PARAMS_REPO_URL);
 
-                        for (Map.Entry<String,Object> entry : props.entrySet()) {
-                                if (entry.getKey().startsWith(PARAMS_REPO_NODE)) {
-                                        String[] nodes = entry.getKey().split("/");
-                                        
-                                        if (nodes.length > 1) {
-                                                params.put(nodes[1], entry.getValue().toString());
+                                if (connectionString == null) {
+                                        UserRepository user_repo = (UserRepository) props.get(SHARED_USER_REPO_PROP_KEY);
+
+                                        if (user_repo != null) {
+                                                connectionString = user_repo.getResourceUri();
                                         }
                                 }
+
+                                Map<String, String> params = new HashMap<String, String>(10);
+
+                                for (Map.Entry<String, Object> entry : props.entrySet()) {
+                                        if (entry.getKey().startsWith(PARAMS_REPO_NODE)) {
+                                                String[] nodes = entry.getKey().split("/");
+
+                                                if (nodes.length > 1) {
+                                                        params.put(nodes[1], entry.getValue().toString());
+                                                }
+                                        }
+                                }
+
+                                Socks5Repository socks5_repo = (Socks5Repository) Class.forName(socks5RepoCls).newInstance();
+
+                                socks5_repo.initRepository(connectionString, params);
+                                this.socks5_repo = socks5_repo;
+                        } catch (Exception ex) {
+                                log.log(Level.SEVERE, "An error initializing data repository pool: ", ex);
                         }
-                        
-                        Socks5Repository socks5_repo = (Socks5Repository) Class.forName(socks5RepoCls).newInstance();
-                        
-                        socks5_repo.initRepository(connectionString, params);
-                        this.socks5_repo = socks5_repo;
+
+                        String verifierCls = (String) props.get(VERIFIER_CLASS_KEY);
+                        if (verifierCls == null) {
+                                verifierCls = VERIFIER_CLASS_VAL;
+                        }
+
+                        try {
+                                verifier = (VerifierIfc) Class.forName(verifierCls).newInstance();
+                                verifierProps = verifier.getDefaults();
+                                verifier.setProxyComponent(this);
+                        } catch (Exception ex) {
+                                Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                 }
-                catch (Exception ex) {
-			log.log(Level.SEVERE, "An error initializing data repository pool: ", ex);
+                else {
+                        verifierProps = new HashMap<String,Object>();
                 }
                 
-                String verifierCls = (String) props.get(VERIFIER_CLASS_KEY);
-                if (verifierCls == null) {
-                        verifierCls = VERIFIER_CLASS_VAL;
-                }
-
-                try {
-                        verifier = (VerifierIfc) Class.forName(verifierCls).newInstance();
-                        
-                        Map<String,Object> params = verifier.getDefaults();
-                        for (Map.Entry<String,Object> entry : props.entrySet()) {
+                if (verifier != null) {                        
+                        for (Map.Entry<String, Object> entry : props.entrySet()) {
                                 if (entry.getKey().startsWith(PARAMS_VERIFIER_NODE)) {
                                         String[] nodes = entry.getKey().split("/");
-                                        
+
                                         if (nodes.length > 1) {
-                                                params.put(nodes[1], entry.getValue());
+                                                verifierProps.put(nodes[1], entry.getValue());
                                         }
                                 }
                         }
-                        
-                        verifier.setProperties(params);
-                        verifier.setProxyComponent(this);
+
+                        verifier.setProperties(verifierProps);
                 }
-                catch (Exception ex) {
-                        Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                
                 
 		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(), getDiscoCategory(), getDiscoCategoryType(), false, XMLNS_BYTESTREAMS);                
 	}

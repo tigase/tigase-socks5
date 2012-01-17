@@ -163,12 +163,12 @@ public class Stream {
                 manager.unregisterStream(this);
            
 		for(int i=0; i<conns.length; i++) {
-                        //if (conns[i] != null) {
+                        if (conns[i] != null) {
                                 bytesRead += conns[i].getBytesReceived();
                                 if (!conns[i].waitingToSend()) {
                                         conns[i].stop();
                                 }
-                        //}
+                        }
 			//conns[i] = null;			
 		}
                 if (log.isLoggable(Level.FINE)) {

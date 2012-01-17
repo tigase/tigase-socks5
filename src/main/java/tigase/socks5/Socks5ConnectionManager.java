@@ -155,7 +155,7 @@ public abstract class Socks5ConnectionManager extends AbstractConnectionManager<
                                 }
                         }
                         catch (Exception ex) {
-                                log.log(Level.WARNING, "exception while checking for if service " + serv.getUniqueId() + " timed out before activation", ex);
+                                log.log(Level.FINE, "exception while checking for if service " + serv.getUniqueId() + " timed out before activation", ex);
                         }
                 }
                 

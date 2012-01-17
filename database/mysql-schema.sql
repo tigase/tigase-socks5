@@ -7,10 +7,17 @@ create table if not exists tig_socks5_users (
 	-- sha1 hash of user_id for fast lookup
 	sha1_user_id char(128) NOT NULL,
 
+	-- domain part of jid of user
+	`domain` varchar(2049) NOT NULL,
+	-- sha1 hash of domain part of user_id for fast lookup
+	sha1_domain char(128) NOT NULL,
+
 	-- limit of file size 
 	filesize_limit bigint default 0,
-	-- limit of transfer (0 - get default, -1 - deny any transfer)
-	transfer_limit bigint default 0,
+	-- limit of transfer per user (0 - get default, -1 - deny any transfer)
+	transfer_limit_per_user bigint default 0,
+	-- limit of transfer per domain (0 - get default, -1 - deny any transfer)
+	transfer_limit_per_domain bigint default 0,
 
 	primary key (uid),
 	unique key sha1_user_id (sha1_user_id),
@@ -29,6 +36,9 @@ create table if not exists tig_socks5_connections (
 	-- uid of user (uid of jid)
 	uid bigint unsigned NOT NULL,
 
+        -- server instance used as proxy
+        instance varchar(128) NOT NULL,
+
 	-- direction of transfer
 	direction int NOT NULL, -- 0-in, 1-out
 
@@ -40,6 +50,7 @@ create table if not exists tig_socks5_connections (
 
 	primary key (conn_id),
 	key uid__transfer_timestamp (uid, transfer_timestamp),
+        key instance__transfer_timestamp (instance, transfer_timestamp),
 	foreign key (uid) references tig_socks5_users(uid)
 )
 ENGINE=InnoDB default character set utf8 ROW_FORMAT=DYNAMIC;
@@ -60,6 +71,9 @@ drop procedure if exists TigSocks5GetTransferLimits;
 drop procedure if exists TigSocks5TransferUsedGeneral;
 -- QUERY END:
 -- QUERY START:
+drop procedure if exists TigSocks5TransferUsedInstance;
+-- QUERY END:
+-- QUERY START:
 drop procedure if exists TigSocks5TransferUsedDomain;
 -- QUERY END:
 -- QUERY START:
@@ -76,10 +90,10 @@ drop procedure if exists TigSocks5UpdateTransferUsed;
 
 delimiter //
 -- QUERY START:
-create procedure TigSocks5CreateUid(_user_id varchar(2049) CHARSET utf8)
+create procedure TigSocks5CreateUid(_user_id varchar(2049) CHARSET utf8, _domain varchar(2049) CHARSET utf8)
 begin	
-	insert into tig_socks5_users (user_id, sha1_user_id) 
-		values (_user_id, sha1(lower(_user_id)));
+	insert into tig_socks5_users (user_id, sha1_user_id, `domain`, sha1_domain) 
+		values (_user_id, sha1(lower(_user_id)), _domain, sha1(lower(_domain)));
 
 	select LAST_INSERT_ID() as uid;
 end //
@@ -95,14 +109,14 @@ end //
 -- QUERY START:
 create procedure TigSocks5GetTransferLimits(_user_id varchar(2049) CHARSET utf8)
 begin	
-	select filesize_limit, transfer_limit from tig_socks5_users 
+	select filesize_limit, transfer_limit_per_user, transfer_limit_per_domain from tig_socks5_users 
 		where sha1_user_id = sha1(lower(_user_id));
 
 end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigSocks5TransferUsedGeneral(_user_id varchar(2049) CHARSET utf8)
+create procedure TigSocks5TransferUsedGeneral()
 begin	
 	select sum(transferred_bytes) from tig_socks5_connections
 		where transfer_timestamp > DATE_FORMAT(now(), '%y-%m-01');
@@ -110,11 +124,19 @@ end //
 -- QUERY END:
 
 -- QUERY START:
+create procedure TigSocks5TransferUsedInstance(_instance varchar(128) CHARSET utf8)
+begin	
+	select sum(transferred_bytes) from tig_socks5_connections
+		where transfer_timestamp > DATE_FORMAT(now(), '%y-%m-01') and instance = _instance;
+end //
+-- QUERY END:
+
+-- QUERY START:v
 create procedure TigSocks5TransferUsedDomain(_domain varchar(2049) CHARSET utf8)
 begin	
 	select sum(transferred_bytes) from tig_socks5_connections
 		where transfer_timestamp > DATE_FORMAT(now(), '%y-%m-01')
-		and uid in (select uid from tig_socks5_users where user_id like concat('%',_domain));
+		and uid in (select uid from tig_socks5_users where sha1_domain = sha1(lower(_domain)));
 end //
 -- QUERY END:
 
@@ -128,10 +150,10 @@ end //
 -- QUERY END:
 
 -- QUERY START:
-create procedure TigSocks5CreateTransferUsed(_uid bigint unsigned, _direction int)
+create procedure TigSocks5CreateTransferUsed(_uid bigint unsigned, _direction int, _instance varchar(128) CHARSET utf8)
 begin	
-	insert into tig_socks5_connections (uid, direction) 
-		values (_uid, _direction);
+	insert into tig_socks5_connections (uid, direction, instance) 
+		values (_uid, _direction, _instance);
 
 	select LAST_INSERT_ID() as res_id;
 end //

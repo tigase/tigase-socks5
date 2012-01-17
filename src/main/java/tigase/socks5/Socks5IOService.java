@@ -1,6 +1,8 @@
 package tigase.socks5;
 
 import java.io.IOException;
+import java.net.ProtocolException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -201,19 +203,28 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                         // if we are not in Active state we need to handle
                         // using Socks5 protocol
                         if (state != State.Active) {
-                                switch (state) {
-                                        case Welcome:
-                                                handleWelcome(buffer);
-                                                break;
-                                        case Auth:
-                                                handleCommand(buffer);
-                                                break;
+                                ByteBuffer buf = ByteBuffer.allocate(buffer.remaining());
+                                buf.put(buffer);
+                                buf.flip();
 
-                                        default:
-                                                break;
+                                try {
+                                        switch (state) {
+                                                case Welcome:
+                                                        handleWelcome(buf);
+                                                        break;
+                                                case Auth:
+                                                        handleCommand(buf);
+                                                        break;
+
+                                                default:
+                                                        break;
+                                        }
+        
+                                        buffer.clear();
                                 }
-                                buffer.clear();
-                                //buf.compact();
+                                catch (BufferUnderflowException ex) {
+                                        buffer.compact();                                        
+                                }
                                 return;
                         }
 
@@ -286,6 +297,14 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
          */
         private void handleWelcome(ByteBuffer buf) throws IOException {
                 byte ver = buf.get();
+                if (ver != 0x05) {
+                        if (log.isLoggable(Level.FINE)) {
+                                log.log(Level.FINE, "stopping service {0} after detecting unsupported protocol", toString());
+                        }
+                        forceStop();
+                        return;
+                }
+                
                 int count = (int) buf.get();
                 boolean ok = false;
                 for (int i = 0; i < count; i++) {
@@ -317,6 +336,9 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
          */
         private void handleCommand(ByteBuffer in) throws IOException {
                 byte ver = in.get();
+                if (ver != 0x05)
+                        throw new ProtocolException("Bad protocol version");
+
                 byte cmd = in.get();
                 in.get();
                 byte atype = in.get();

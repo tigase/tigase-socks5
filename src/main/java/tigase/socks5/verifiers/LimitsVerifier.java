@@ -124,6 +124,11 @@ public class LimitsVerifier implements VerifierIfc {
 
         @Override
         public void updateTransfer(Socks5IOService service, boolean force) throws TigaseDBException, QuotaException {
+                if (service == null) {
+                        // should not happend!
+                        return;
+                }
+                
                 JID fullJID = service.getJID();
                 if (fullJID == null) {
                         // someone closed connection without authentication done, so no JID

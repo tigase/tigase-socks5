@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tigase.net.IOService;
+import tigase.net.SocketThread;
 import tigase.xmpp.JID;
 
 /**
@@ -32,6 +33,7 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
         private Stream stream;
         private Socks5ConnectionType connectionType;
         private Socks5ConnectionManager manager;
+        private ByteBuffer buf = null;
         private int bytesReceived = 0;
         private int bytesSent = 0;
 
@@ -126,8 +128,34 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
         }
 
         @Override
+        public boolean waitingToRead() {
+                // we need to read data from socket only if buffer is empty
+                // to prevent OutOfMemory if we read data faster than we can 
+                // send it
+                return super.isInputBufferEmpty();
+        }
+        
+	@Override
+	public IOService<?> call() throws IOException {
+                IOService<?> serv = super.call();
+                
+                if (isConnected()) {
+                        if (!this.waitingToSend() && stream != null) {
+                                // we need to add other service if we sent all data from buffer
+                                Socks5IOService secondServ = stream.getSecondConnection(this);
+                                if (secondServ != null) {
+                                        secondServ.clearBuffer();
+                                        SocketThread.addSocketService(secondServ);
+                                }
+                        }
+                }
+                
+                return serv;
+        }
+
+        @Override
         protected ByteBuffer readBytes() throws IOException {
-                ByteBuffer buf = super.readBytes();
+                buf = super.readBytes();
 
                 if (buf != null) {
                         bytesReceived += buf.remaining();
@@ -145,6 +173,12 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                 super.writeBytes(buf);
         }
 
+        public void clearBuffer() {
+                if (buf != null && !buf.hasRemaining()) {
+                        buf.clear();
+                }
+        }
+        
         @Override
         public void forceStop() {
                 if (state != State.Closed) {
@@ -231,11 +265,16 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                         // we are connected so write data to recipient connection
                         if (stream != null) {
                                 try {
-                                        ByteBuffer buf = ByteBuffer.allocate(buffer.remaining());
-                                        buf.put(buffer);
-                                        buf.flip();
-                                        stream.proxy(buf, this);
+                                        // we do not need to copy data to another buffer 
+                                        // as it will not be used by reading thread
+//                                        ByteBuffer buf = ByteBuffer.allocate(buffer.remaining());
+//                                        buf.put(buffer);
+//                                        buf.flip();
+                                        stream.proxy(buffer, this);
 //                                        buffer.clear();
+                                        if (!buffer.hasRemaining()) {
+                                                buffer.clear();
+                                        }
                                 }
                                 catch (IOException ex) {
                                         if (log.isLoggable(Level.FINEST)) {
@@ -245,7 +284,6 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                                 }
                         }
 
-                        buffer.clear();
                 }
 
                 manager.socketDataProcessed(this);

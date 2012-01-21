@@ -59,7 +59,11 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 	@Override
 	public void processPacket(Packet packet) {
                 try {
-
+                        if (packet.getType() == StanzaType.error) {
+                                // dropping packet of type error
+                                return;
+                        }
+                        
                         if (packet.getElement().getChild("query", XMLNS_BYTESTREAMS) != null) {
                                 if (log.isLoggable(Level.FINEST)) {
                                         log.log(Level.FINEST, "processing bytestream query packet = {0}", packet);

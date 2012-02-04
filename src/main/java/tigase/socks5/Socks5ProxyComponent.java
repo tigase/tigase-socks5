@@ -50,15 +50,29 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
         private static final String SOCKS5_REPOSITORY_CLASS_KEY = "socks5-repo-cls";
         private static final String SOCKS5_REPOSITORY_CLASS_VAL = "tigase.socks5.repository.JDBCSocks5Repository";
         
+        private static final String REMOTE_ADDRESSES_KEY = "remote-addresses";
+        
         private Socks5Repository socks5_repo = null;
         private VerifierIfc verifier = null;
+        private String[] remoteAddresses = null;
         
         private ClusterControllerIfc clusterController = null;
 	private final List<JID> cluster_nodes = new LinkedList<JID>();
 	
+        private PacketForward packetForwardCmd = new PacketForward();
+        
 	@Override
 	public void processPacket(Packet packet) {
                 try {
+                        // forwarding response from other node to client
+                        if (packet.getPacketFrom() != null && packet.getPacketFrom().getLocalpart().equals(getName()) 
+                                && cluster_nodes.contains(packet.getPacketFrom())) {
+                                packet.setPacketFrom(getComponentId());
+                                packet.setPacketTo(null);
+                                addOutPacket(packet);
+                                return;
+                        }
+                        
                         if (packet.getType() == StanzaType.error) {
                                 // dropping packet of type error
                                 return;
@@ -74,18 +88,33 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
                                         try {
                                                 String jid = packet.getStanzaTo().getBareJID().toString();
                                                 String hostname = getComponentId().getDomain();
-                                                DNSEntry[] entries = DNSResolver.getHostSRV_Entries(hostname);
 
                                                 // Generate list of streamhosts
                                                 List<Element> children = new LinkedList<Element>();
-                                                for (DNSEntry entry : entries) {
-                                                        int[] ports = getPorts();
-                                                        for (int port : ports) {
-                                                                Element streamhost = new Element("streamhost");
-                                                                streamhost.setAttribute("jid", jid);
-                                                                streamhost.setAttribute("host", entry.getIp());
-                                                                streamhost.setAttribute("port", String.valueOf(port));
-                                                                children.add(streamhost);
+                                                
+                                                if (remoteAddresses == null || remoteAddresses.length == 0) {
+                                                        DNSEntry[] entries = DNSResolver.getHostSRV_Entries(hostname);
+                                                        for (DNSEntry entry : entries) {
+                                                                int[] ports = getPorts();
+                                                                for (int port : ports) {
+                                                                        Element streamhost = new Element("streamhost");
+                                                                        streamhost.setAttribute("jid", jid);
+                                                                        streamhost.setAttribute("host", entry.getIp());
+                                                                        streamhost.setAttribute("port", String.valueOf(port));
+                                                                        children.add(streamhost);
+                                                                }
+                                                        }
+                                                }
+                                                else {
+                                                        for (String addr : remoteAddresses) {
+                                                                int[] ports = getPorts();
+                                                                for (int port : ports) {
+                                                                        Element streamhost = new Element("streamhost");
+                                                                        streamhost.setAttribute("jid", jid);
+                                                                        streamhost.setAttribute("host", addr);
+                                                                        streamhost.setAttribute("port", String.valueOf(port));
+                                                                        children.add(streamhost);
+                                                                }
                                                         }
                                                 }
                                                 //Collections.reverse(children);
@@ -302,6 +331,10 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
                         verifierProps = new HashMap<String,Object>();
                 }
                 
+                if (props.containsKey(REMOTE_ADDRESSES_KEY)) { 
+                        remoteAddresses = (String[]) props.get(REMOTE_ADDRESSES_KEY);
+                }
+                
                 if (verifier != null) {                        
                         for (Map.Entry<String, Object> entry : props.entrySet()) {
                                 if (entry.getKey().startsWith(PARAMS_VERIFIER_NODE)) {
@@ -433,6 +466,10 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
         @Override
         public void setClusterController(ClusterControllerIfc cl_controller) {
                 clusterController = cl_controller;
+                
+                clusterController.removeCommandListener(PACKET_FORWARD_CMD, packetForwardCmd);
+                
+                clusterController.setCommandListener(PACKET_FORWARD_CMD, packetForwardCmd);
         }
 
         /**
@@ -456,6 +493,8 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
                         for (Element el_packet : packets) {
                                 try {
                                         Packet packet = Packet.packetInstance(el_packet);
+                                        packet.setPacketFrom(fromNode);
+                                        packet.setPacketTo(getComponentId());
                                         
                                         String cid = createConnId(el_packet.getAttribute("/iq/query", "sid"), el_packet.getAttribute("from"), el_packet.getCData("/iq/query/activate"));
                                         if (cid == null) {

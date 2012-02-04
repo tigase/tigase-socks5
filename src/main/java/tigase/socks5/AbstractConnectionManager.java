@@ -172,7 +172,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>> extends
         @Override
 	public synchronized void everyMinute() {
 		doForAllServices(ioStatsGetter);
-                
                 super.everyMinute();
 	}
 

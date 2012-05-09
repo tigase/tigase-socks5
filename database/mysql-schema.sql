@@ -167,3 +167,5 @@ begin
 end //
 -- QUERY END:
 
+
+delimiter ;

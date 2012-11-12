@@ -2,6 +2,8 @@ package tigase.socks5;
 
 import tigase.db.TigaseDBException;
 import tigase.socks5.repository.Socks5Repository;
+
+import java.io.File;
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -13,6 +15,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.tigase.licence.Licence;
+import org.tigase.licence.LicenceLoader;
+import org.tigase.licence.LicenceLoaderFactory;
 
 import tigase.cluster.api.ClusterCommandException;
 import tigase.cluster.api.ClusterControllerIfc;
@@ -61,6 +67,62 @@ public class Socks5ProxyComponent extends Socks5ConnectionManager implements Clu
 	
         private PacketForward packetForwardCmd = new PacketForward();
         
+    	private static final File LICENCE_FILE_DEF = new File("etc/socks5.licence");
+
+    	private Licence lic;
+        
+    public Socks5ProxyComponent() {
+		try {
+			final LicenceLoader loader = LicenceLoaderFactory.create();
+			if (!LICENCE_FILE_DEF.exists()) {
+				log.severe("Licence file doesn't exists!");
+				throw new RuntimeException("Licence file doesn't exists!");
+			}
+			lic = loader.loadLicence(LICENCE_FILE_DEF);
+
+			switch (lic.check()) {
+			case invalidDates:
+				log.severe("Licence is expired.");
+				throw new RuntimeException("Licence is expired.");
+			case invalidSignature:
+				log.severe("Invalid or modified licence file");
+				throw new RuntimeException("Invalid or modified licence file");
+			case valid:
+				break;
+			}
+
+			String appId = lic.getPropertyAsString("app-id");
+			if (appId == null || !appId.equals("socks5")) {
+				log.severe("This is not licence for SOCKS5 Component!");
+				throw new RuntimeException("This is not licence for SOCKS5 Component!");
+			}
+
+		} catch (Exception e) {
+			log.severe("Can't load licence file. Error: " + e.getMessage());
+			throw new RuntimeException("Can't load licence file. Error: " + e.getMessage());
+		}
+	}  
+      
+    @Override
+    public synchronized void everyHour() {
+    	try {
+			switch (lic.check()) {
+			case invalidDates:
+				log.severe("Licence is expired.");
+				System.exit(402);
+			case invalidSignature:
+				log.severe("Invalid or modified licence file");
+				System.exit(402);
+			case valid:
+				break;
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Licence invalid", e);
+			System.exit(402);
+		}
+    	super.everyHour();
+    }
+    
 	@Override
 	public void processPacket(Packet packet) {
                 try {

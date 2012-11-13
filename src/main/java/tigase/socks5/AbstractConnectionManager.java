@@ -1,6 +1,7 @@
 package tigase.socks5;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.Collections;
 import java.util.HashSet;
@@ -410,6 +411,26 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>> extends
 			} else {
 				return DEF_TRAFFIC_CLASS;
 			}
+                }
+
+                @Override
+                public String getSRVType() {
+                        return "_socks5._tcp";
+                }
+
+                @Override
+                public String getRemoteHostname() {
+                        return (String) port_props.get("remote-hostname");
+                }
+
+                @Override
+                public InetSocketAddress getRemoteAddress() {
+                        return (InetSocketAddress) port_props.get("remote-address");
+                }
+
+                @Override
+                public SocketType getSocketType() {
+                        return SocketType.valueOf(port_props.get(PORT_SOCKET_PROP_KEY).toString());
                 }
                 
         }

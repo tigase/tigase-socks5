@@ -6,7 +6,8 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -254,7 +255,7 @@ public class Socks5ProxyComponent
 																						"Address of streamhost not found", false));
 					}
 				} else {
-					String sid = query.getAttribute("sid");
+					String sid = query.getAttributeStaticStr("sid");
 
 					if (sid != null) {
 
@@ -710,7 +711,7 @@ public class Socks5ProxyComponent
 					packet.setPacketTo(getComponentId());
 
 					String cid = createConnId(el_packet.getAttributeStaticStr(Iq.IQ_QUERY_PATH,
-												 "sid"), el_packet.getAttribute("from"),
+												 "sid"), el_packet.getAttributeStaticStr(Packet.FROM_ATT),
 																 el_packet.getCDataStaticStr(IQ_QUERY_ACTIVATE_PATH));
 
 					if (cid == null) {
@@ -737,4 +738,4 @@ public class Socks5ProxyComponent
 }
 
 
-//~ Formatted in Tigase Code Convention on 13/02/16
+//~ Formatted in Tigase Code Convention on 13/02/20

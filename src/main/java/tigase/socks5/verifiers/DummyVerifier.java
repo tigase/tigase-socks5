@@ -38,7 +38,7 @@ public class DummyVerifier implements VerifierIfc {
 
         @Override
         public void setProperties(Map<String, Object> props) {
-                throw new UnsupportedOperationException("Not supported yet.");
+                
         }
         
 }

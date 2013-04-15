@@ -93,10 +93,10 @@ public class Socks5ProxyComponent
 	private static final String REMOTE_ADDRESSES_KEY        = "remote-addresses";
 	private static final String SOCKS5_REPOSITORY_CLASS_KEY = "socks5-repo-cls";
 	private static final String SOCKS5_REPOSITORY_CLASS_VAL =
-		"tigase.socks5.repository.JDBCSocks5Repository";
+		"tigase.socks5.repository.DummySocks5Repository";
 	private static final String VERIFIER_CLASS_KEY = "verifier-class";
 	private static final String VERIFIER_CLASS_VAL =
-		"tigase.socks5.verifiers.LimitsVerifier";
+		"tigase.socks5.verifiers.DummyVerifier";
 	private static final String XMLNS_BYTESTREAMS =
 		"http://jabber.org/protocol/bytestreams";
 
@@ -431,6 +431,7 @@ public class Socks5ProxyComponent
 	public Map<String, Object> getDefaults(Map<String, Object> params) {
 		Map<String, Object> props = super.getDefaults(params);
 
+		props.put(SOCKS5_REPOSITORY_CLASS_KEY, SOCKS5_REPOSITORY_CLASS_VAL);
 		props.put(VERIFIER_CLASS_KEY, VERIFIER_CLASS_VAL);
 
 		return props;

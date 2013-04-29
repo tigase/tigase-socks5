@@ -39,8 +39,8 @@ create table if not exists tig_socks5_connections (
         -- server instance used as proxy
         instance varchar(128) NOT NULL,
 
-	-- direction of transfer
-	direction int NOT NULL, -- 0-in, 1-out
+	-- direction of transfer,  -- 0-in, 1-out
+	direction int NOT NULL,
 
 	-- count of bytes transferred thru connections
 	transferred_bytes bigint default 0,

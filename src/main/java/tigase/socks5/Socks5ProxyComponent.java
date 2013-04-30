@@ -89,7 +89,6 @@ public class Socks5ProxyComponent
 	private static final String PARAMS_VERIFIER_NODE  = "verifier-params";
 	private static final String[] QUERY_ACTIVATE_PATH = { "query", "activate" };
 
-//private static final File LICENCE_FILE_DEF = new File("etc/socks5.licence");
 	private static final String REMOTE_ADDRESSES_KEY        = "remote-addresses";
 	private static final String SOCKS5_REPOSITORY_CLASS_KEY = "socks5-repo-cls";
 	private static final String SOCKS5_REPOSITORY_CLASS_VAL =
@@ -119,35 +118,6 @@ public class Socks5ProxyComponent
 	 */
 	public Socks5ProxyComponent() {
 
-//  try {
-//    final LicenceLoader loader = LicenceLoaderFactory.create();
-//    if (!LICENCE_FILE_DEF.exists()) {
-//      log.severe("Licence file doesn't exists!");
-//      throw new RuntimeException("Licence file doesn't exists!");
-//    }
-//    lic = loader.loadLicence(LICENCE_FILE_DEF);
-//
-//    switch (lic.check()) {
-//    case invalidDates:
-//      log.severe("Licence is expired.");
-//      throw new RuntimeException("Licence is expired.");
-//    case invalidSignature:
-//      log.severe("Invalid or modified licence file");
-//      throw new RuntimeException("Invalid or modified licence file");
-//    case valid:
-//      break;
-//    }
-//
-//    String appId = lic.getPropertyAsString("app-id");
-//    if (appId == null || !appId.equals("socks5")) {
-//      log.severe("This is not licence for SOCKS5 Component!");
-//      throw new RuntimeException("This is not licence for SOCKS5 Component!");
-//    }
-//
-//  } catch (Exception e) {
-//    log.severe("Can't load licence file. Error: " + e.getMessage());
-//    throw new RuntimeException("Can't load licence file. Error: " + e.getMessage());
-//  }
 	}
 
 	//~--- methods --------------------------------------------------------------
@@ -159,21 +129,6 @@ public class Socks5ProxyComponent
 	@Override
 	public synchronized void everyHour() {
 
-//  try {
-//  switch (lic.check()) {
-//  case invalidDates:
-//    log.severe("Licence is expired.");
-//    System.exit(402);
-//  case invalidSignature:
-//    log.severe("Invalid or modified licence file");
-//    System.exit(402);
-//  case valid:
-//    break;
-//  }
-//    }catch (Exception e) {
-//  log.log(Level.SEVERE, "Licence invalid", e);
-//  System.exit(402);
-//    }
 		super.everyHour();
 	}
 

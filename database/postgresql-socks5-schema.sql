@@ -102,7 +102,7 @@ create or replace function TigSocks5GetTransferLimits(_user_id varchar(2049), OU
 	OUT _transfer_limit_per_user bigint, OUT _transfer_limit_per_domain bigint) as '
 	select filesize_limit, transfer_limit_per_user, transfer_limit_per_domain from tig_socks5_users 
 		where user_id = $1;
-' LANGUAGE 'SQL';
+'LANGUAGE 'sql';
 -- QUERY END:
 
 -- QUERY START:

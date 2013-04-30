@@ -18,7 +18,13 @@ create table tig_socks5_users (
 	primary key (uid)
 );
 
+-- QUERY END:
+
+-- QUERY START:
 create unique index tig_socks5_users_user_id on tig_socks5_users ( user_id );
+-- QUERY END:
+
+-- QUERY START:
 create unique index tig_socks5_users_domain on tig_socks5_users ( "domain" );
 -- QUERY END:
 
@@ -34,8 +40,8 @@ create table tig_socks5_connections (
         -- server instance used as proxy
         instance varchar(128) NOT NULL,
 
-	-- direction of transfer
-	direction int NOT NULL, -- 0-in, 1-out
+	-- direction of transfer,  -- 0-in, 1-out
+	direction int NOT NULL,
 
 	-- count of bytes transferred thru connections
 	transferred_bytes bigint default 0,
@@ -45,9 +51,17 @@ create table tig_socks5_connections (
 
 	primary key (conn_id)
 );
+-- QUERY END:
 
+-- QUERY START:
 create index tig_socks5_connections_uid on tig_socks5_connections ( uid );
+-- QUERY END:
+
+-- QUERY START:
 create index tig_socks5_connections_uid_transfer_timestamp on tig_socks5_connections ( uid, transfer_timestamp );
+-- QUERY END:
+
+-- QUERY START:
 create index tig_socks5_connections_instance_transfer_timestamp on tig_socks5_connections ( instance, transfer_timestamp );
 -- QUERY END:
 

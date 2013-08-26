@@ -119,13 +119,10 @@
 		
         <resources>
           <resource>
-            <directory>${basedir}/database</directory>
-            <filtering>false</filtering>
+            <directory>database</directory>
             <includes>
-							<include>derby-socks5-schema.sql</include>
-							<include>mysql-socks5-schema.sql</include>
-							<include>postgresql-socks5-schema.sql</include>
-						</includes>
+				<include>**/*.sql</include>
+			</includes>
           </resource>
         </resources>		
 		

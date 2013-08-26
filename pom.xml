@@ -116,6 +116,19 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		
+        <resources>
+          <resource>
+            <directory>${basedir}/database</directory>
+            <filtering>false</filtering>
+            <includes>
+							<include>derby-socks5-schema.sql</include>
+							<include>mysql-socks5-schema.sql</include>
+							<include>postgresql-socks5-schema.sql</include>
+						</includes>
+          </resource>
+        </resources>		
+		
 		<extensions>
 			<extension>
 				<groupId>org.apache.maven.wagon</groupId>
@@ -130,14 +143,6 @@
 		</extensions>
 
 	</build>
-	<!-- <repositories>
-			<repository>
-					<snapshots />
-					<id>tigase</id>
-					<name>Tigase rpos</name>
-					<url>http://maven.tigase.org</url>
-			</repository>
-	</repositories> -->
 	<dependencies>
 		<dependency>
 			<groupId>tigase</groupId>
@@ -177,16 +182,31 @@
 			</plugin>
 		</plugins>
 	</reporting>
+	<repositories>
+		<repository>
+			<id>tigase</id>
+			<name>Tigase repository</name>
+			<url>http://maven.tigase.org</url>
+		</repository>
+		<repository>
+			<id>tigase-snapshot</id>
+			<name>Tigase repository</name>
+			<url>http://build.xmpp-test.net/maven/</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 	<distributionManagement>
 		<repository>
 			<id>tigase</id>
-			<name>Tigase Repo</name>
-			<url>scpexe://maven.tigase.org:/home/webapp/maven-repository</url>
+			<name>Tigase repository</name>
+			<url>scp://maven.tigase.org:/home/webapp/maven-repository</url>
 		</repository>
 		<snapshotRepository>
-			<id>tigase</id>
-			<name>Tigase Repo</name>
-			<url>scpexe://maven.tigase.org:/home/webapp/maven-repository</url>
+			<id>tigase-snapshot</id>
+			<name>Tigase snapshot repository</name>
+			<url>scp://build.xmpp-test.net:/home/maven/repository</url>
 		</snapshotRepository>
 	</distributionManagement>
 </project>

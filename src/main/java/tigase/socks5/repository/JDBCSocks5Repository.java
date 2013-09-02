@@ -143,7 +143,16 @@ public class JDBCSocks5Repository
 						? 0
 						: 1);
 				createTransferUsedByConnection.setString(3, instance.toString());
-				rs = createTransferUsedByConnection.executeQuery();
+				switch ( data_repo.getDatabaseType() ) {
+					case jtds:
+					case sqlserver:
+						createTransferUsedByConnection.executeUpdate();
+						rs = createTransferUsedByConnection.getGeneratedKeys();
+						break;
+					default:
+						rs = createTransferUsedByConnection.executeQuery();
+						break;
+				}
 				if (rs.next()) {
 					connectionId = rs.getLong(1);
 				}
@@ -562,7 +571,16 @@ public class JDBCSocks5Repository
 			synchronized (create_uid) {
 				create_uid.setString(1, user.toString());
 				create_uid.setString(2, user.getDomain());
-				rs = create_uid.executeQuery();
+				switch ( data_repo.getDatabaseType() ) {
+					case jtds:
+					case sqlserver:
+						create_uid.executeUpdate();
+						rs = create_uid.getGeneratedKeys();
+						break;
+					default:
+						rs = create_uid.executeQuery();
+						break;
+				}
 				if (rs.next()) {
 					uid = rs.getLong(1);
 				}

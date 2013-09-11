@@ -4,12 +4,12 @@ if not exists (select * from sysobjects where name='tig_socks5_users' and xtype=
 	-- unique uid for fast lookup
 	[uid] [bigint] IDENTITY(1,1) NOT NULL,
 	-- jid of user
-	[user_id] varchar(2049) NOT NULL,
+	[user_id] nvarchar(2049) NOT NULL,
 	-- sha1 hash of user_id for fast lookup
 	[sha1_user_id] [varbinary](128) NOT NULL,
 
 	-- domain part of jid of user
-	[domain] varchar(2049) NOT NULL,
+	[domain] nvarchar(2049) NOT NULL,
 	[domain_fragment] AS LEFT ([domain], 765), 
 	-- sha1 hash of domain part of user_id for fast lookup
 	[sha1_domain] [varbinary](128) NOT NULL,
@@ -50,7 +50,7 @@ if not exists (select * from sysobjects where name='tig_socks5_connections' and 
 	[uid] [bigint] NOT NULL,
 
     -- server instance used as proxy
-    [instance] varchar(128) NOT NULL,
+    [instance] nvarchar(128) NOT NULL,
 
 	-- direction of transfer,  -- 0-in, 1-out
 	[direction] int NOT NULL,
@@ -90,8 +90,8 @@ GO
 
 -- QUERY START:
 create procedure dbo.TigSocks5CreateUid
-	@_user_id varchar(2049),
-	@_domain varchar(2049)
+	@_user_id nvarchar(2049),
+	@_domain nvarchar(2049)
 AS	
 begin	
 	insert into tig_socks5_users ([user_id], [sha1_user_id], [domain], [sha1_domain]) 
@@ -111,7 +111,7 @@ GO
 
 -- QUERY START:
 create procedure [dbo].[TigSocks5GetUid]
-	@_user_id varchar(2049)
+	@_user_id nvarchar(2049)
 AS	
 begin
 	select uid from tig_socks5_users where sha1_user_id = HASHBYTES('SHA1', lower(@_user_id));
@@ -127,7 +127,7 @@ GO
 
 -- QUERY START:
 create procedure [dbo].[TigSocks5GetTransferLimits]
-	@_user_id varchar(2049)
+	@_user_id nvarchar(2049)
 AS
 begin	
 	select filesize_limit, transfer_limit_per_user, transfer_limit_per_domain from tig_socks5_users 
@@ -161,7 +161,7 @@ GO
 
 -- QUERY START:
 create procedure [dbo].[TigSocks5TransferUsedInstance]
-	@_instance varchar(128)
+	@_instance nvarchar(128)
 AS
 begin
 	select sum(transferred_bytes) from tig_socks5_connections
@@ -178,7 +178,7 @@ GO
 
 -- QUERY START:
 create procedure [dbo].[TigSocks5TransferUsedDomain]
-	@_domain varchar(2049)
+	@_domain nvarchar(2049)
 AS
 begin	
 	select sum(transferred_bytes) from tig_socks5_connections
@@ -216,7 +216,7 @@ GO
 create procedure [dbo].[TigSocks5CreateTransferUsed]
 	@_uid bigint,
 	@_direction int,
-	@_instance varchar(128)
+	@_instance nvarchar(128)
 AS
 begin	
 	insert into tig_socks5_connections (uid, direction, instance) 

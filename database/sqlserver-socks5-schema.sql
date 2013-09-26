@@ -30,12 +30,12 @@ if not exists (select * from sysobjects where name='tig_socks5_users' and xtype=
 GO
 
 -- QUERY START:
-create unique index tig_socks5_users_user_id on tig_socks5_users ( user_id_fragment );
+create unique index tig_socks5_users_user_id on dbo.tig_socks5_users ( user_id_fragment );
 -- QUERY END:
 GO
 
 -- QUERY START:
-create unique index tig_socks5_users_domain on tig_socks5_users ( [domain_fragment] );
+create unique index tig_socks5_users_domain on dbo.tig_socks5_users ( [domain_fragment] );
 -- QUERY END:
 GO
 
@@ -68,17 +68,17 @@ if not exists (select * from sysobjects where name='tig_socks5_connections' and 
 GO
 
 -- QUERY START:
-create index tig_socks5_connections_uid on tig_socks5_connections ( uid );
+create index tig_socks5_connections_uid on dbo.tig_socks5_connections ( uid );
 -- QUERY END:
 GO
 
 -- QUERY START:
-create index tig_socks5_connections_uid_transfer_timestamp on tig_socks5_connections ( uid, transfer_timestamp );
+create index tig_socks5_connections_uid_transfer_timestamp on dbo.tig_socks5_connections ( uid, transfer_timestamp );
 -- QUERY END:
 GO
 
 -- QUERY START:
-create index tig_socks5_connections_instance_transfer_timestamp on tig_socks5_connections ( instance, transfer_timestamp );
+create index tig_socks5_connections_instance_transfer_timestamp on dbo.tig_socks5_connections ( instance, transfer_timestamp );
 -- QUERY END:
 GO
 
@@ -94,7 +94,7 @@ create procedure dbo.TigSocks5CreateUid
 	@_domain nvarchar(2049)
 AS	
 begin	
-	insert into tig_socks5_users ([user_id], [sha1_user_id], [domain], [sha1_domain]) 
+	insert into dbo.tig_socks5_users ([user_id], [sha1_user_id], [domain], [sha1_domain]) 
 		values (@_user_id, HASHBYTES('SHA1', lower(@_user_id)), @_domain, HASHBYTES('SHA1', lower(@_domain)));
 
 	
@@ -114,7 +114,7 @@ create procedure [dbo].[TigSocks5GetUid]
 	@_user_id nvarchar(2049)
 AS	
 begin
-	select uid from tig_socks5_users where sha1_user_id = HASHBYTES('SHA1', lower(@_user_id));
+	select uid from dbo.tig_socks5_users where sha1_user_id = HASHBYTES('SHA1', lower(@_user_id));
 end
 -- QUERY END:
 GO
@@ -130,7 +130,7 @@ create procedure [dbo].[TigSocks5GetTransferLimits]
 	@_user_id nvarchar(2049)
 AS
 begin	
-	select filesize_limit, transfer_limit_per_user, transfer_limit_per_domain from tig_socks5_users 
+	select filesize_limit, transfer_limit_per_user, transfer_limit_per_domain from dbo.tig_socks5_users 
 		where sha1_user_id = HASHBYTES('SHA1', lower(@_user_id));
 
 end
@@ -164,7 +164,7 @@ create procedure [dbo].[TigSocks5TransferUsedInstance]
 	@_instance nvarchar(128)
 AS
 begin
-	select sum(transferred_bytes) from tig_socks5_connections
+	select sum(transferred_bytes) from dbo.tig_socks5_connections
 		where transfer_timestamp > FORMAT(GETDATE(), 'yyyy-mm-01', 'en-US') and instance = @_instance;
 end
 -- QUERY END:
@@ -181,9 +181,9 @@ create procedure [dbo].[TigSocks5TransferUsedDomain]
 	@_domain nvarchar(2049)
 AS
 begin	
-	select sum(transferred_bytes) from tig_socks5_connections
+	select sum(transferred_bytes) from dbo.tig_socks5_connections
 		where transfer_timestamp > FORMAT(GETDATE(), 'yyyy-mm-01', 'en-US')
-		and [uid] in (select uid from tig_socks5_users where sha1_domain = HASHBYTES('SHA1', lower(@_domain)));
+		and [uid] in (select uid from dbo.tig_socks5_users where sha1_domain = HASHBYTES('SHA1', lower(@_domain)));
 end
 -- QUERY END:
 GO
@@ -199,7 +199,7 @@ create procedure [dbo].[TigSocks5TransferUsedUser]
 	@_uid bigint
 AS
 begin	
-	select sum(transferred_bytes) from tig_socks5_connections
+	select sum(transferred_bytes) from dbo.tig_socks5_connections
 		where transfer_timestamp > FORMAT(GETDATE(), 'yyyy-mm-01', 'en-US')
 		and uid = @_uid;
 end
@@ -219,7 +219,7 @@ create procedure [dbo].[TigSocks5CreateTransferUsed]
 	@_instance nvarchar(128)
 AS
 begin	
-	insert into tig_socks5_connections (uid, direction, instance) 
+	insert into dbo.tig_socks5_connections (uid, direction, instance) 
 		values (@_uid, @_direction, @_instance);
 
 	select SCOPE_IDENTITY() as uid;	
@@ -239,7 +239,7 @@ create procedure [dbo].[TigSocks5UpdateTransferUsed]
 	@_transferred_bytes bigint
 AS
 begin
-	update tig_socks5_connections set transferred_bytes = @_transferred_bytes 
+	update dbo.tig_socks5_connections set transferred_bytes = @_transferred_bytes 
 		where conn_id = @_conn_id;
 end
 -- QUERY END:

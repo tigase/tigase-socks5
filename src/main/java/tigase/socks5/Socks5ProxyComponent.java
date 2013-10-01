@@ -69,6 +69,8 @@ import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import tigase.cluster.api.CommandListenerAbstract;
+import tigase.stats.StatisticsList;
 
 /**
  * Class description
@@ -83,7 +85,7 @@ public class Socks5ProxyComponent
 	private static final String[] IQ_QUERY_ACTIVATE_PATH = { "iq", "query", "activate" };
 	private static final Logger log                      =
 		Logger.getLogger(Socks5ProxyComponent.class.getCanonicalName());
-	private static final String PACKET_FORWARD_CMD    = "packet-forward";
+	private static final String PACKET_FORWARD_CMD    = "socks5-packet-forward";
 	private static final String PARAMS_REPO_NODE      = "repo-params";
 	private static final String PARAMS_REPO_URL       = "repo-url";
 	private static final String PARAMS_VERIFIER_NODE  = "verifier-params";
@@ -620,8 +622,8 @@ public class Socks5ProxyComponent
 	@Override
 	public void setClusterController(ClusterControllerIfc cl_controller) {
 		clusterController = cl_controller;
-		clusterController.removeCommandListener(PACKET_FORWARD_CMD, packetForwardCmd);
-		clusterController.setCommandListener(PACKET_FORWARD_CMD, packetForwardCmd);
+		clusterController.removeCommandListener(packetForwardCmd);
+		clusterController.setCommandListener(packetForwardCmd);
 	}
 
 	//~--- get methods ----------------------------------------------------------
@@ -643,7 +645,12 @@ public class Socks5ProxyComponent
 	 * to another node of cluster
 	 */
 	private class PacketForward
-					implements CommandListener {
+					extends CommandListenerAbstract {
+		
+		public PacketForward() {
+			super(PACKET_FORWARD_CMD);
+		}
+		
 		/**
 		 * Method description
 		 *

@@ -2,7 +2,7 @@
  * Socks5ProxyComponent.java
  *
  * Tigase Jabber/XMPP Server
- * Copyright (C) 2004-2012 "Artur Hefczyc" <artur.hefczyc@tigase.org>
+ * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,7 +29,7 @@ package tigase.socks5;
 import tigase.cluster.api.ClusterCommandException;
 import tigase.cluster.api.ClusterControllerIfc;
 import tigase.cluster.api.ClusteredComponentIfc;
-import tigase.cluster.api.CommandListener;
+import tigase.cluster.api.CommandListenerAbstract;
 
 import tigase.db.TigaseDBException;
 import tigase.db.UserRepository;
@@ -54,8 +54,6 @@ import tigase.xmpp.StanzaType;
 
 //~--- JDK imports ------------------------------------------------------------
 
-import java.io.File;
-
 import java.net.UnknownHostException;
 
 import java.security.MessageDigest;
@@ -69,46 +67,43 @@ import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import tigase.cluster.api.CommandListenerAbstract;
-import tigase.stats.StatisticsList;
 
 /**
  * Class description
  *
  *
  * @version        Enter version here..., 13/02/16
- * @author         Enter your name here...
+ * @author         <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
  */
 public class Socks5ProxyComponent
 				extends Socks5ConnectionManager
 				implements ClusteredComponentIfc {
 	private static final String[] IQ_QUERY_ACTIVATE_PATH = { "iq", "query", "activate" };
-	private static final Logger log                      =
-		Logger.getLogger(Socks5ProxyComponent.class.getCanonicalName());
-	private static final String PACKET_FORWARD_CMD    = "socks5-packet-forward";
-	private static final String PARAMS_REPO_NODE      = "repo-params";
-	private static final String PARAMS_REPO_URL       = "repo-url";
-	private static final String PARAMS_VERIFIER_NODE  = "verifier-params";
-	private static final String[] QUERY_ACTIVATE_PATH = { "query", "activate" };
-
-	private static final String REMOTE_ADDRESSES_KEY        = "remote-addresses";
-	private static final String SOCKS5_REPOSITORY_CLASS_KEY = "socks5-repo-cls";
-	private static final String SOCKS5_REPOSITORY_CLASS_VAL =
-		"tigase.socks5.repository.DummySocks5Repository";
+	private static final Logger   log = Logger.getLogger(Socks5ProxyComponent.class
+			.getCanonicalName());
+	private static final String   PACKET_FORWARD_CMD          = "socks5-packet-forward";
+	private static final String   PARAMS_REPO_NODE            = "repo-params";
+	private static final String   PARAMS_REPO_URL             = "repo-url";
+	private static final String   PARAMS_VERIFIER_NODE        = "verifier-params";
+	private static final String[] QUERY_ACTIVATE_PATH         = { "query", "activate" };
+	private static final String   REMOTE_ADDRESSES_KEY        = "remote-addresses";
+	private static final String   SOCKS5_REPOSITORY_CLASS_KEY = "socks5-repo-cls";
+	private static final String   SOCKS5_REPOSITORY_CLASS_VAL =
+			"tigase.socks5.repository.DummySocks5Repository";
 	private static final String VERIFIER_CLASS_KEY = "verifier-class";
 	private static final String VERIFIER_CLASS_VAL =
-		"tigase.socks5.verifiers.DummyVerifier";
+			"tigase.socks5.verifiers.DummyVerifier";
 	private static final String XMLNS_BYTESTREAMS =
-		"http://jabber.org/protocol/bytestreams";
+			"http://jabber.org/protocol/bytestreams";
 
 	//~--- fields ---------------------------------------------------------------
 
 	private ClusterControllerIfc clusterController = null;
-	private String[] remoteAddresses               = null;
-	private Socks5Repository socks5_repo           = null;
-	private VerifierIfc verifier                   = null;
-	private PacketForward packetForwardCmd         = new PacketForward();
-	private final List<JID> cluster_nodes          = new LinkedList<JID>();
+	private String[]             remoteAddresses   = null;
+	private Socks5Repository     socks5_repo       = null;
+	private VerifierIfc          verifier          = null;
+	private PacketForward        packetForwardCmd  = new PacketForward();
+	private final List<JID>      cluster_nodes     = new LinkedList<JID>();
 
 	//~--- constructors ---------------------------------------------------------
 
@@ -118,9 +113,7 @@ public class Socks5ProxyComponent
 	 * Constructs ...
 	 *
 	 */
-	public Socks5ProxyComponent() {
-
-	}
+	public Socks5ProxyComponent() {}
 
 	//~--- methods --------------------------------------------------------------
 
@@ -130,8 +123,35 @@ public class Socks5ProxyComponent
 	 */
 	@Override
 	public synchronized void everyHour() {
-
 		super.everyHour();
+	}
+
+	/**
+	 * Handle connection of other node of cluster
+	 *
+	 * @param node
+	 */
+	@Override
+	public void nodeConnected(String node) {
+		try {
+			cluster_nodes.add(JID.jidInstance(getName() + "@" + node));
+		} catch (TigaseStringprepException e) {
+			log.log(Level.WARNING, "TigaseStringprepException occured processing {0}", node);
+		}
+	}
+
+	/**
+	 * Handle disconnection of other node of cluster
+	 *
+	 * @param node
+	 */
+	@Override
+	public void nodeDisconnected(String node) {
+		try {
+			cluster_nodes.remove(JID.jidInstance(getName() + "@" + node));
+		} catch (TigaseStringprepException e) {
+			log.log(Level.WARNING, "TigaseStringprepException occured processing {0}", node);
+		}
 	}
 
 	/**
@@ -145,9 +165,8 @@ public class Socks5ProxyComponent
 		try {
 
 			// forwarding response from other node to client
-			if ((packet.getPacketFrom() != null) &&
-					packet.getPacketFrom().getLocalpart().equals(getName()) &&
-					cluster_nodes.contains(packet.getPacketFrom())) {
+			if ((packet.getPacketFrom() != null) && packet.getPacketFrom().getLocalpart()
+					.equals(getName()) && cluster_nodes.contains(packet.getPacketFrom())) {
 				packet.setPacketFrom(getComponentId());
 				packet.setPacketTo(null);
 				addOutPacket(packet);
@@ -209,7 +228,7 @@ public class Socks5ProxyComponent
 						addOutPacket(packet.okResult(query, 0));
 					} catch (UnknownHostException e) {
 						addOutPacket(packet.errorResult("cancel", null, "internal-server-error",
-																						"Address of streamhost not found", false));
+								"Address of streamhost not found", false));
 					}
 				} else {
 					String sid = query.getAttributeStaticStr("sid");
@@ -217,24 +236,24 @@ public class Socks5ProxyComponent
 					if (sid != null) {
 
 						// Generate stream unique id
-						String cid = createConnId(sid, packet.getStanzaFrom().toString(),
-																			query.getCDataStaticStr(QUERY_ACTIVATE_PATH));
+						String cid = createConnId(sid, packet.getStanzaFrom().toString(), query
+								.getCDataStaticStr(QUERY_ACTIVATE_PATH));
 
 						if (cid == null) {
 							addOutPacket(packet.errorResult("cancel", null, "internal-server-error",
-																							null, false));
+									null, false));
 						}
 
 						Stream stream = getStream(cid);
 
 						if (stream != null) {
 							stream.setRequester(packet.getStanzaFrom());
-							stream.setTarget(
-									JID.jidInstance(query.getCDataStaticStr(QUERY_ACTIVATE_PATH)));
+							stream.setTarget(JID.jidInstance(query.getCDataStaticStr(
+									QUERY_ACTIVATE_PATH)));
 							if (!verifier.isAllowed(stream)) {
 								stream.close();
 								addOutPacket(packet.errorResult("cancel", null, "not-allowed", null,
-																								false));
+										false));
 
 								return;
 							}
@@ -243,14 +262,14 @@ public class Socks5ProxyComponent
 							if (!stream.activate()) {
 								stream.close();
 								addOutPacket(packet.errorResult("cancel", null, "internal-server-error",
-																								null, false));
+										null, false));
 
 								return;
 							}
 							addOutPacket(packet.okResult((Element) null, 0));
 						} else if (!sendToNextNode(packet)) {
 							addOutPacket(packet.errorResult("cancel", null, "item-not-found", null,
-																							true));
+									true));
 						}
 					} else {
 						addOutPacket(packet.errorResult("cancel", null, "bad-request", null, false));
@@ -258,70 +277,16 @@ public class Socks5ProxyComponent
 				}
 			} else {
 				addOutPacket(packet.errorResult("cancel", 400, "feature-not-implemented", null,
-																				false));
+						false));
 			}
 		} catch (Exception ex) {
 			if (log.isLoggable(Level.FINE)) {
 				log.log(Level.FINE, "exception while processing packet = " + packet, ex);
 			}
 			addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null,
-																			false));
+					false));
 		}
 	}
-
-	/**
-	 * Creates unique stream id generated from sid, from and to
-	 *
-	 * @param sid
-	 * @param from
-	 * @param to
-	 * @return
-	 */
-	private String createConnId(String sid, String from, String to) {
-		try {
-			String id        = sid + from + to;
-			MessageDigest md = MessageDigest.getInstance("SHA-1");
-
-			return Algorithms.hexDigest("", id, "SHA-1");
-		} catch (NoSuchAlgorithmException e) {
-			log.warning(e.getMessage());
-
-			return null;
-		}
-	}
-
-	//~--- get methods ----------------------------------------------------------
-
-	/**
-	 * Returns disco category
-	 *
-	 * @return
-	 */
-	public String getDiscoCategory() {
-		return "proxy";
-	}
-
-	/**
-	 * Returns disco category type
-	 *
-	 * @return
-	 */
-	@Override
-	public String getDiscoCategoryType() {
-		return "bytestreams";
-	}
-
-	/**
-	 * Returns disco description
-	 *
-	 * @return
-	 */
-	@Override
-	public String getDiscoDescription() {
-		return "Socks5 Bytestreams Service";
-	}
-
-	//~--- methods --------------------------------------------------------------
 
 	/**
 	 * Method description
@@ -359,13 +324,13 @@ public class Socks5ProxyComponent
 			super.socketDataProcessed(service);
 		} catch (Socks5Exception ex) {
 			if (log.isLoggable(Level.FINEST)) {
-				log.log(Level.FINEST,
-								"stopping service after exception from verifier: " + ex.getMessage());
+				log.log(Level.FINEST, "stopping service after exception from verifier: " + ex
+						.getMessage());
 			}
 
 			// @todo send error
-			Packet message = Message.getMessage(getComponentId(), service.getJID(),
-												 StanzaType.error, ex.getMessage(), null, null, null);
+			Packet message = Message.getMessage(getComponentId(), service.getJID(), StanzaType
+					.error, ex.getMessage(), null, null, null);
 
 			this.addOutPacket(message);
 			service.forceStop();
@@ -394,7 +359,58 @@ public class Socks5ProxyComponent
 		return props;
 	}
 
+	/**
+	 * Returns disco category
+	 *
+	 * @return
+	 */
+	public String getDiscoCategory() {
+		return "proxy";
+	}
+
+	/**
+	 * Returns disco category type
+	 *
+	 * @return
+	 */
+	@Override
+	public String getDiscoCategoryType() {
+		return "bytestreams";
+	}
+
+	/**
+	 * Returns disco description
+	 *
+	 * @return
+	 */
+	@Override
+	public String getDiscoDescription() {
+		return "Socks5 Bytestreams Service";
+	}
+
+	/**
+	 * Return Socks5 repository
+	 *
+	 * @return
+	 */
+	public Socks5Repository getSock5Repository() {
+		return socks5_repo;
+	}
+
 	//~--- set methods ----------------------------------------------------------
+
+	/**
+	 * Method description
+	 *
+	 *
+	 * @param cl_controller
+	 */
+	@Override
+	public void setClusterController(ClusterControllerIfc cl_controller) {
+		clusterController = cl_controller;
+		clusterController.removeCommandListener(packetForwardCmd);
+		clusterController.setCommandListener(packetForwardCmd);
+	}
 
 	/**
 	 * Method description
@@ -419,8 +435,8 @@ public class Socks5ProxyComponent
 				String connectionString = (String) props.get(PARAMS_REPO_URL);
 
 				if (connectionString == null) {
-					UserRepository user_repo =
-						(UserRepository) props.get(SHARED_USER_REPO_PROP_KEY);
+					UserRepository user_repo = (UserRepository) props.get(
+							SHARED_USER_REPO_PROP_KEY);
 
 					if (user_repo != null) {
 						connectionString = user_repo.getResourceUri();
@@ -439,8 +455,8 @@ public class Socks5ProxyComponent
 					}
 				}
 
-				Socks5Repository socks5_repo =
-					(Socks5Repository) Class.forName(socks5RepoCls).newInstance();
+				Socks5Repository socks5_repo = (Socks5Repository) Class.forName(socks5RepoCls)
+						.newInstance();
 
 				socks5_repo.initRepository(connectionString, params);
 				this.socks5_repo = socks5_repo;
@@ -459,7 +475,7 @@ public class Socks5ProxyComponent
 				verifier.setProxyComponent(this);
 			} catch (Exception ex) {
 				Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null,
-												 ex);
+						ex);
 			}
 		} else {
 			verifierProps = new HashMap<String, Object>();
@@ -480,74 +496,7 @@ public class Socks5ProxyComponent
 			verifier.setProperties(verifierProps);
 		}
 		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(),
-															 getDiscoCategory(), getDiscoCategoryType(), false,
-															 XMLNS_BYTESTREAMS);
-	}
-
-	//~--- get methods ----------------------------------------------------------
-
-	/**
-	 * Return Socks5 repository
-	 *
-	 * @return
-	 */
-	public Socks5Repository getSock5Repository() {
-		return socks5_repo;
-	}
-
-	//~--- methods --------------------------------------------------------------
-
-	/**
-	 * Handle connection of other node of cluster
-	 *
-	 * @param node
-	 */
-	@Override
-	public void nodeConnected(String node) {
-		try {
-			cluster_nodes.add(JID.jidInstance(getName() + "@" + node));
-		} catch (TigaseStringprepException e) {
-			log.log(Level.WARNING, "TigaseStringprepException occured processing {0}", node);
-		}
-	}
-
-	/**
-	 * Handle disconnection of other node of cluster
-	 *
-	 * @param node
-	 */
-	@Override
-	public void nodeDisconnected(String node) {
-		try {
-			cluster_nodes.remove(JID.jidInstance(getName() + "@" + node));
-		} catch (TigaseStringprepException e) {
-			log.log(Level.WARNING, "TigaseStringprepException occured processing {0}", node);
-		}
-	}
-
-	//~--- get methods ----------------------------------------------------------
-
-	/**
-	 * Returns first node of cluster
-	 *
-	 * @param userJid
-	 * @return
-	 */
-	protected JID getFirstClusterNode(JID userJid) {
-		JID cluster_node = null;
-		List<JID> nodes  = cluster_nodes;
-
-		if (nodes != null) {
-			for (JID node : nodes) {
-				if (!node.equals(getComponentId())) {
-					cluster_node = node;
-
-					break;
-				}
-			}
-		}
-
-		return cluster_node;
+				getDiscoCategory(), getDiscoCategoryType(), false, XMLNS_BYTESTREAMS);
 	}
 
 	//~--- methods --------------------------------------------------------------
@@ -562,11 +511,11 @@ public class Socks5ProxyComponent
 	 * @return
 	 * @throws TigaseStringprepException
 	 */
-	protected boolean sendToNextNode(JID fromNode, Set<JID> visitedNodes,
-																	 Map<String, String> data, Packet packet)
+	protected boolean sendToNextNode(JID fromNode, Set<JID> visitedNodes, Map<String,
+			String> data, Packet packet)
 					throws TigaseStringprepException {
-		JID next_node   = null;
-		List<JID> nodes = cluster_nodes;
+		JID       next_node = null;
+		List<JID> nodes     = cluster_nodes;
 
 		if (nodes != null) {
 			for (JID node : nodes) {
@@ -579,7 +528,7 @@ public class Socks5ProxyComponent
 		}
 		if (next_node != null) {
 			clusterController.sendToNodes(PACKET_FORWARD_CMD, packet.getElement(), fromNode,
-																		visitedNodes, new JID[] { next_node });
+					visitedNodes, new JID[] { next_node });
 		}
 
 		return next_node != null;
@@ -600,7 +549,7 @@ public class Socks5ProxyComponent
 			}
 			if (cluster_node != null) {
 				clusterController.sendToNodes(PACKET_FORWARD_CMD, packet.getElement(),
-																			getComponentId(), null, cluster_node);
+						getComponentId(), null, cluster_node);
 
 				return true;
 			}
@@ -609,21 +558,6 @@ public class Socks5ProxyComponent
 		}
 
 		return false;
-	}
-
-	//~--- set methods ----------------------------------------------------------
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param cl_controller
-	 */
-	@Override
-	public void setClusterController(ClusterControllerIfc cl_controller) {
-		clusterController = cl_controller;
-		clusterController.removeCommandListener(packetForwardCmd);
-		clusterController.setCommandListener(packetForwardCmd);
 	}
 
 	//~--- get methods ----------------------------------------------------------
@@ -638,6 +572,52 @@ public class Socks5ProxyComponent
 		return new int[] { 1080 };
 	}
 
+	/**
+	 * Returns first node of cluster
+	 *
+	 * @param userJid
+	 * @return
+	 */
+	protected JID getFirstClusterNode(JID userJid) {
+		JID       cluster_node = null;
+		List<JID> nodes        = cluster_nodes;
+
+		if (nodes != null) {
+			for (JID node : nodes) {
+				if (!node.equals(getComponentId())) {
+					cluster_node = node;
+
+					break;
+				}
+			}
+		}
+
+		return cluster_node;
+	}
+
+	//~--- methods --------------------------------------------------------------
+
+	/**
+	 * Creates unique stream id generated from sid, from and to
+	 *
+	 * @param sid
+	 * @param from
+	 * @param to
+	 * @return
+	 */
+	private String createConnId(String sid, String from, String to) {
+		try {
+			String        id = sid + from + to;
+			MessageDigest md = MessageDigest.getInstance("SHA-1");
+
+			return Algorithms.hexDigest("", id, "SHA-1");
+		} catch (NoSuchAlgorithmException e) {
+			log.warning(e.getMessage());
+
+			return null;
+		}
+	}
+
 	//~--- inner classes --------------------------------------------------------
 
 	/**
@@ -646,11 +626,16 @@ public class Socks5ProxyComponent
 	 */
 	private class PacketForward
 					extends CommandListenerAbstract {
-		
+		/**
+		 * Constructs ...
+		 *
+		 */
 		public PacketForward() {
 			super(PACKET_FORWARD_CMD);
 		}
-		
+
+		//~--- methods ------------------------------------------------------------
+
 		/**
 		 * Method description
 		 *
@@ -663,9 +648,9 @@ public class Socks5ProxyComponent
 		 * @throws ClusterCommandException
 		 */
 		@Override
-		public void executeCommand(JID fromNode, Set<JID> visitedNodes,
-															 Map<String, String> data, Queue<Element> packets)
-						throws ClusterCommandException {
+		public void executeCommand(JID fromNode, Set<JID> visitedNodes, Map<String,
+				String> data, Queue<Element> packets)
+				throws ClusterCommandException {
 			for (Element el_packet : packets) {
 				try {
 					Packet packet = Packet.packetInstance(el_packet);
@@ -674,12 +659,12 @@ public class Socks5ProxyComponent
 					packet.setPacketTo(getComponentId());
 
 					String cid = createConnId(el_packet.getAttributeStaticStr(Iq.IQ_QUERY_PATH,
-												 "sid"), el_packet.getAttributeStaticStr(Packet.FROM_ATT),
-																 el_packet.getCDataStaticStr(IQ_QUERY_ACTIVATE_PATH));
+							"sid"), el_packet.getAttributeStaticStr(Packet.FROM_ATT), el_packet
+							.getCDataStaticStr(IQ_QUERY_ACTIVATE_PATH));
 
 					if (cid == null) {
 						addOutPacket(Authorization.INTERNAL_SERVER_ERROR.getResponseMessage(packet,
-										"Could not calculate SID", true));
+								"Could not calculate SID", true));
 
 						continue;
 					}
@@ -687,11 +672,11 @@ public class Socks5ProxyComponent
 						processPacket(packet);
 					} else if (!sendToNextNode(fromNode, visitedNodes, data, packet)) {
 						addOutPacket(packet.errorResult("cancel", null, "item-not-found", null,
-																						true));
+								true));
 					}
 				} catch (PacketErrorTypeException ex) {
 					Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null,
-													 ex);
+							ex);
 				} catch (TigaseStringprepException ex) {
 					log.log(Level.WARNING, "Addressing error, stringprep failure: {0}", el_packet);
 				}
@@ -701,4 +686,4 @@ public class Socks5ProxyComponent
 }
 
 
-//~ Formatted in Tigase Code Convention on 13/02/20
+//~ Formatted in Tigase Code Convention on 13/10/15

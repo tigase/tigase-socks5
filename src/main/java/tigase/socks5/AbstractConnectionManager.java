@@ -26,6 +26,20 @@ package tigase.socks5;
 
 //~--- non-JDK imports --------------------------------------------------------
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.SocketChannel;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import tigase.conf.ConfigurationException;
 import tigase.net.ConnectionOpenListener;
 import tigase.net.ConnectionOpenThread;
 import tigase.net.ConnectionType;
@@ -33,29 +47,8 @@ import tigase.net.IOService;
 import tigase.net.IOServiceListener;
 import tigase.net.SocketThread;
 import tigase.net.SocketType;
-
 import tigase.server.AbstractMessageReceiver;
-
 import tigase.stats.StatisticsList;
-
-//~--- JDK imports ------------------------------------------------------------
-
-import java.io.IOException;
-
-import java.net.InetSocketAddress;
-
-import java.nio.channels.SocketChannel;
-
-import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
 
 /**
  * Class description
@@ -230,9 +223,10 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	 * Configure instance based on properties
 	 *
 	 * @param props
+	 * @throws tigase.conf.ConfigurationException
 	 */
 	@Override
-	public void setProperties(Map<String, Object> props) {
+	public void setProperties(Map<String, Object> props) throws ConfigurationException {
 		super.setProperties(props);
 		if (props.get(NET_BUFFER_PROP_KEY) != null) {
 			net_buffer = (Integer) props.get(NET_BUFFER_PROP_KEY);

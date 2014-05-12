@@ -38,35 +38,30 @@ import tigase.server.Iq;
 import tigase.server.Message;
 import tigase.server.Packet;
 
-import tigase.socks5.repository.Socks5Repository;
-
-import tigase.util.Algorithms;
-import tigase.util.DNSEntry;
-import tigase.util.DNSResolver;
-import tigase.util.TigaseStringprepException;
-
-import tigase.xml.Element;
-
 import tigase.xmpp.Authorization;
 import tigase.xmpp.JID;
 import tigase.xmpp.PacketErrorTypeException;
 import tigase.xmpp.StanzaType;
 
-//~--- JDK imports ------------------------------------------------------------
+import tigase.conf.ConfigurationException;
+import tigase.socks5.repository.Socks5Repository;
+import tigase.util.Algorithms;
+import tigase.util.DNSEntry;
+import tigase.util.DNSResolver;
+import tigase.util.TigaseStringprepException;
+import tigase.xml.Element;
 
 import java.net.UnknownHostException;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class description
@@ -420,7 +415,7 @@ public class Socks5ProxyComponent
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public void setProperties(Map<String, Object> props) {
+	public void setProperties(Map<String, Object> props) throws ConfigurationException {
 		super.setProperties(props);
 
 		Map<String, Object> verifierProps = null;

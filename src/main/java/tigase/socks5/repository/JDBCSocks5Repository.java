@@ -131,30 +131,34 @@ public class JDBCSocks5Repository
 					throws TigaseDBException {
 		long      connectionId = 0;
 		long      uid          = getUID(user);
-		ResultSet rs           = null;
 
 		try {
+			ResultSet rs           = null;
 			PreparedStatement createTransferUsedByConnection = data_repo.getPreparedStatement(
 					null, createTransferUsedByConnection_query);
 
 			synchronized (createTransferUsedByConnection) {
-				createTransferUsedByConnection.setLong(1, uid);
-				createTransferUsedByConnection.setInt(2, (type == Socks5ConnectionType.Requester)
-						? 0
-						: 1);
-				createTransferUsedByConnection.setString(3, instance.toString());
-				switch ( data_repo.getDatabaseType() ) {
-					case jtds:
-					case sqlserver:
-						createTransferUsedByConnection.executeUpdate();
-						rs = createTransferUsedByConnection.getGeneratedKeys();
-						break;
-					default:
-						rs = createTransferUsedByConnection.executeQuery();
-						break;
-				}
-				if (rs.next()) {
-					connectionId = rs.getLong(1);
+				try {
+					createTransferUsedByConnection.setLong(1, uid);
+					createTransferUsedByConnection.setInt(2, (type == Socks5ConnectionType.Requester)
+							? 0
+							: 1);
+					createTransferUsedByConnection.setString(3, instance.toString());
+					switch (data_repo.getDatabaseType()) {
+						case jtds:
+						case sqlserver:
+							createTransferUsedByConnection.executeUpdate();
+							rs = createTransferUsedByConnection.getGeneratedKeys();
+							break;
+						default:
+							rs = createTransferUsedByConnection.executeQuery();
+							break;
+					}
+					if (rs.next()) {
+						connectionId = rs.getLong(1);
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -162,8 +166,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 
 		return connectionId;
@@ -263,8 +265,6 @@ public class JDBCSocks5Repository
 	@Override
 	public void updateTransferUsedByConnection(long stream_id, long transferred_bytes)
 					throws TigaseDBException {
-		ResultSet rs = null;
-
 		try {
 			PreparedStatement updateTransferUsedByConnection = data_repo.getPreparedStatement(
 					null, updateTransferUsedByConnection_query);
@@ -279,8 +279,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 	}
 
@@ -296,20 +294,24 @@ public class JDBCSocks5Repository
 	 */
 	@Override
 	public Limits getTransferLimits() throws TigaseDBException {
-		Limits    limits = new Limits();
-		ResultSet rs     = null;
+		Limits limits = new Limits();
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement transferLimitsGeneral = data_repo.getPreparedStatement(null,
 					transferLimitsGeneral_query);
 
 			synchronized (transferLimitsGeneral) {
-				transferLimitsGeneral.setString(1, DEF_GLOBAL_SETTINGS);
-				rs = transferLimitsGeneral.executeQuery();
-				if (rs.next()) {
-					limits.setTransferLimitPerFile(rs.getLong(1));
-					limits.setTransferLimitPerUser(rs.getLong(2));
-					limits.setTransferLimitPerDomain(rs.getLong(3));
+				try {
+					transferLimitsGeneral.setString(1, DEF_GLOBAL_SETTINGS);
+					rs = transferLimitsGeneral.executeQuery();
+					if (rs.next()) {
+						limits.setTransferLimitPerFile(rs.getLong(1));
+						limits.setTransferLimitPerUser(rs.getLong(2));
+						limits.setTransferLimitPerDomain(rs.getLong(3));
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -317,8 +319,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 
 		return limits;
@@ -336,20 +336,24 @@ public class JDBCSocks5Repository
 	 */
 	@Override
 	public Limits getTransferLimits(String domain) throws TigaseDBException {
-		Limits    limits = new Limits();
-		ResultSet rs     = null;
+		Limits limits = new Limits();
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement transferLimitsDomain = data_repo.getPreparedStatement(null,
 					transferLimitsDomain_query);
 
 			synchronized (transferLimitsDomain) {
-				transferLimitsDomain.setString(1, domain);
-				rs = transferLimitsDomain.executeQuery();
-				if (rs.next()) {
-					limits.setTransferLimitPerFile(rs.getLong(1));
-					limits.setTransferLimitPerUser(rs.getLong(2));
-					limits.setTransferLimitPerDomain(rs.getLong(3));
+				try {
+					transferLimitsDomain.setString(1, domain);
+					rs = transferLimitsDomain.executeQuery();
+					if (rs.next()) {
+						limits.setTransferLimitPerFile(rs.getLong(1));
+						limits.setTransferLimitPerUser(rs.getLong(2));
+						limits.setTransferLimitPerDomain(rs.getLong(3));
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -357,8 +361,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 
 		return limits;
@@ -376,20 +378,24 @@ public class JDBCSocks5Repository
 	 */
 	@Override
 	public Limits getTransferLimits(BareJID user) throws TigaseDBException {
-		Limits    limits = new Limits();
-		ResultSet rs     = null;
+		Limits limits = new Limits();
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement transferLimitsUser = data_repo.getPreparedStatement(null,
 					transferLimitsUser_query);
 
 			synchronized (transferLimitsUser) {
-				transferLimitsUser.setString(1, user.toString());
-				rs = transferLimitsUser.executeQuery();
-				if (rs.next()) {
-					limits.setTransferLimitPerFile(rs.getLong(1));
-					limits.setTransferLimitPerUser(rs.getLong(2));
-					limits.setTransferLimitPerDomain(rs.getLong(3));
+				try {
+					transferLimitsUser.setString(1, user.toString());
+					rs = transferLimitsUser.executeQuery();
+					if (rs.next()) {
+						limits.setTransferLimitPerFile(rs.getLong(1));
+						limits.setTransferLimitPerUser(rs.getLong(2));
+						limits.setTransferLimitPerDomain(rs.getLong(3));
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -397,8 +403,7 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
+
 		}
 
 		return limits;
@@ -415,16 +420,20 @@ public class JDBCSocks5Repository
 	@Override
 	public long getTransferUsed() throws TigaseDBException {
 		long      transferUsed = 0;
-		ResultSet rs           = null;
 
 		try {
+			ResultSet rs           = null;
 			PreparedStatement transferUsedGeneral = data_repo.getPreparedStatement(null,
 					transferUsedGeneral_query);
 
 			synchronized (transferUsedGeneral) {
-				rs = transferUsedGeneral.executeQuery();
-				if (rs.next()) {
-					transferUsed = rs.getLong(1);
+				try {
+					rs = transferUsedGeneral.executeQuery();
+					if (rs.next()) {
+						transferUsed = rs.getLong(1);
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -432,8 +441,7 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
+
 		}
 
 		return transferUsed;
@@ -451,18 +459,22 @@ public class JDBCSocks5Repository
 	 */
 	@Override
 	public long getTransferUsedByDomain(String domain) throws TigaseDBException {
-		long      transferUsed = 0;
-		ResultSet rs           = null;
+		long transferUsed = 0;
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement transferUsedDomain = data_repo.getPreparedStatement(null,
 					transferUsedDomain_query);
 
 			synchronized (transferUsedDomain) {
-				transferUsedDomain.setString(1, domain);
-				rs = transferUsedDomain.executeQuery();
-				if (rs.next()) {
-					transferUsed = rs.getLong(1);
+				try {
+					transferUsedDomain.setString(1, domain);
+					rs = transferUsedDomain.executeQuery();
+					if (rs.next()) {
+						transferUsed = rs.getLong(1);
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -470,8 +482,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 
 		return transferUsed;
@@ -489,18 +499,22 @@ public class JDBCSocks5Repository
 	 */
 	@Override
 	public long getTransferUsedByInstance(String instance) throws TigaseDBException {
-		long      transferUsed = 0;
-		ResultSet rs           = null;
+		long transferUsed = 0;
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement transferUsedInstance = data_repo.getPreparedStatement(null,
 					transferUsedInstance_query);
 
 			synchronized (transferUsedInstance) {
-				transferUsedInstance.setString(1, instance);
-				rs = transferUsedInstance.executeQuery();
-				if (rs.next()) {
-					transferUsed = rs.getLong(1);
+				try {
+					transferUsedInstance.setString(1, instance);
+					rs = transferUsedInstance.executeQuery();
+					if (rs.next()) {
+						transferUsed = rs.getLong(1);
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -508,8 +522,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 
 		return transferUsed;
@@ -528,18 +540,22 @@ public class JDBCSocks5Repository
 	@Override
 	public long getTransferUsedByUser(BareJID user) throws TigaseDBException {
 		long      transferUsed = 0;
-		ResultSet rs           = null;
 		long      uid          = getUID(user);
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement transferUsedUser = data_repo.getPreparedStatement(null,
 					transferUsedUser_query);
 
 			synchronized (transferUsedUser) {
-				transferUsedUser.setLong(1, uid);
-				rs = transferUsedUser.executeQuery();
-				if (rs.next()) {
-					transferUsed = rs.getLong(1);
+				try {
+					transferUsedUser.setLong(1, uid);
+					rs = transferUsedUser.executeQuery();
+					if (rs.next()) {
+						transferUsed = rs.getLong(1);
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -547,8 +563,7 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
+
 		}
 
 		return transferUsed;
@@ -562,27 +577,31 @@ public class JDBCSocks5Repository
 		}
 
 		long      uid = 0;
-		ResultSet rs  = null;
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement create_uid = data_repo.getPreparedStatement(user,
 					createUid_query);
 
 			synchronized (create_uid) {
-				create_uid.setString(1, user.toString());
-				create_uid.setString(2, user.getDomain());
-				switch ( data_repo.getDatabaseType() ) {
-					case jtds:
-					case sqlserver:
-						create_uid.executeUpdate();
-						rs = create_uid.getGeneratedKeys();
-						break;
-					default:
-						rs = create_uid.executeQuery();
-						break;
-				}
-				if (rs.next()) {
-					uid = rs.getLong(1);
+				try {
+					create_uid.setString(1, user.toString());
+					create_uid.setString(2, user.getDomain());
+					switch (data_repo.getDatabaseType()) {
+						case jtds:
+						case sqlserver:
+							create_uid.executeUpdate();
+							rs = create_uid.getGeneratedKeys();
+							break;
+						default:
+							rs = create_uid.executeQuery();
+							break;
+					}
+					if (rs.next()) {
+						uid = rs.getLong(1);
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -590,8 +609,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 
 		return uid;
@@ -634,18 +651,22 @@ public class JDBCSocks5Repository
 		}
 
 		long      uid = 0;
-		ResultSet rs  = null;
 
 		try {
+			ResultSet rs = null;
 			PreparedStatement get_uid = data_repo.getPreparedStatement(user, getUid_query);
 
 			synchronized (get_uid) {
-				get_uid.setString(1, user.toString());
-				rs = get_uid.executeQuery();
-				if (rs.next()) {
-					uid = rs.getLong(1);
-				} else {
-					return createUID(user);
+				try {
+					get_uid.setString(1, user.toString());
+					rs = get_uid.executeQuery();
+					if (rs.next()) {
+						uid = rs.getLong(1);
+					} else {
+						return createUID(user);
+					}
+				} finally {
+					data_repo.release(null, rs);
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
@@ -653,8 +674,6 @@ public class JDBCSocks5Repository
 					"Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
-		} finally {
-			data_repo.release(null, rs);
 		}
 
 		return uid;

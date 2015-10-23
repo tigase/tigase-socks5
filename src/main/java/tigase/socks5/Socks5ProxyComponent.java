@@ -62,6 +62,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tigase.server.Priority;
 
 /**
  * Class description
@@ -626,7 +627,7 @@ public class Socks5ProxyComponent
 		 *
 		 */
 		public PacketForward() {
-			super(PACKET_FORWARD_CMD);
+			super(PACKET_FORWARD_CMD, Priority.HIGH);
 		}
 
 		//~--- methods ------------------------------------------------------------

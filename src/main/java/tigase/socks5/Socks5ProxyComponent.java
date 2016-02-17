@@ -37,6 +37,7 @@ import tigase.db.UserRepository;
 import tigase.server.Iq;
 import tigase.server.Message;
 import tigase.server.Packet;
+import tigase.server.Priority;
 
 import tigase.xmpp.Authorization;
 import tigase.xmpp.JID;
@@ -47,7 +48,7 @@ import tigase.conf.ConfigurationException;
 import tigase.socks5.repository.Socks5Repository;
 import tigase.util.Algorithms;
 import tigase.util.DNSEntry;
-import tigase.util.DNSResolver;
+import tigase.util.DNSResolverFactory;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
 
@@ -62,7 +63,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.server.Priority;
 
 /**
  * Class description
@@ -190,7 +190,7 @@ public class Socks5ProxyComponent
 						List<Element> children = new LinkedList<Element>();
 
 						if ((remoteAddresses == null) || (remoteAddresses.length == 0)) {
-							DNSEntry[] entries = DNSResolver.getHostSRV_Entries(hostname);
+							DNSEntry[] entries = DNSResolverFactory.getInstance().getHostSRV_Entries(hostname);
 
 							for (DNSEntry entry : entries) {
 								int[] ports = getPorts();

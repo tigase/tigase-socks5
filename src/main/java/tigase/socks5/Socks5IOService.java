@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tigase.net.IOService;
@@ -17,6 +18,8 @@ import tigase.xmpp.JID;
 public class Socks5IOService<RefObject> extends IOService<RefObject> {
 
         private static final Logger log = Logger.getLogger(Socks5IOService.class.getCanonicalName());
+
+        protected final ReentrantLock transferInProgress = new ReentrantLock();
 
         /**
          * All possible states of Socks5 connection
@@ -139,7 +142,6 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
 	public IOService<?> call() throws IOException {
                 IOService<?> serv = super.call();
                 
-                if (isConnected()) {
                         if (!this.waitingToSend() && stream != null) {
                                 // we need to add other service if we sent all data from buffer
                                 Socks5IOService secondServ = stream.getSecondConnection(this);
@@ -148,16 +150,16 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                                         SocketThread.addSocketService(secondServ);
                                 }
                         }
-                }
-                
+
                 return serv;
         }
 
         @Override
         protected ByteBuffer readBytes() throws IOException {
-                buf = super.readBytes();
+                ByteBuffer buf = super.readBytes();
 
                 if (buf != null) {
+                        this.buf = buf;
                         bytesReceived += buf.remaining();
                 }
                 
@@ -169,12 +171,26 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                 if (buf != null) {
                         bytesSent += buf.remaining();
                 }
-                
+
+                transferInProgress.lock();
+//                int remaining = waitingToSendSize() + buf.remaining();
                 super.writeBytes(buf);
+//                log.log(Level.FINEST, "{0} written data: {1}, remaining: {2}", new Object[] { this, remaining - waitingToSendSize(), waitingToSendSize() });
+                transferInProgress.unlock();
+        }
+
+        @Override
+        protected void writeData(String data) {
+                transferInProgress.lock();
+//                int remaining = waitingToSendSize();
+                super.writeData(data);
+//                log.log(Level.FINEST, "{0} written data: {1}, remaining: {2}", new Object[] { this, remaining - waitingToSendSize(), waitingToSendSize() });
+                transferInProgress.unlock();
         }
 
         public void clearBuffer() {
                 if (buf != null && !buf.hasRemaining()) {
+                        log.log(Level.FINEST, "{0} clearing buffer!", new Object[] { this });
                         buf.clear();
                 }
         }
@@ -190,6 +206,7 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                 }
 
 //                try {
+//                        log.log(Level.FINEST, "stopping connection " + this + " waiting data: " + waitingToSendSize());
 //                        throw new IOException();
 //                }
 //                catch (Exception ex) {
@@ -231,7 +248,19 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                         return;
                 }
 
+                Socks5IOService secondServ = stream != null ? stream.getSecondConnection(this) : null;
+                if (secondServ != null) {
+                        secondServ.transferInProgress.lock();
+                }
+
                 ByteBuffer buffer = readBytes();
+                if (buffer != null) {
+                        buffer = buf;
+                }
+
+                if (log.isLoggable(Level.FINEST)) {
+                        log.log(Level.FINEST, "{0} read data: {1}", new Object[]{this, ((buffer == null) ? "NULL" : buffer.remaining())});
+                }
 
                 if (buffer != null && buffer.hasRemaining()) {
                         // if we are not in Active state we need to handle
@@ -284,6 +313,10 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                                 }
                         }
 
+                }
+
+                if (secondServ != null) {
+                        secondServ.transferInProgress.unlock();
                 }
 
                 manager.socketDataProcessed(this);

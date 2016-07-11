@@ -146,7 +146,7 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                                 // we need to add other service if we sent all data from buffer
                                 Socks5IOService secondServ = stream.getSecondConnection(this);
                                 if (secondServ != null) {
-                                        secondServ.clearBuffer();
+//                                        secondServ.clearBuffer();
                                         SocketThread.addSocketService(secondServ);
                                 }
                         }
@@ -175,6 +175,7 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
                 transferInProgress.lock();
 //                int remaining = waitingToSendSize() + buf.remaining();
                 super.writeBytes(buf);
+                //buf.compact();
 //                log.log(Level.FINEST, "{0} written data: {1}, remaining: {2}", new Object[] { this, remaining - waitingToSendSize(), waitingToSendSize() });
                 transferInProgress.unlock();
         }
@@ -183,17 +184,25 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
         protected void writeData(String data) {
                 transferInProgress.lock();
 //                int remaining = waitingToSendSize();
-                super.writeData(data);
+                Socks5IOService secondServ = (stream != null) ? stream.getSecondConnection(this) : null;
+                if (secondServ != null && secondServ.buf.remaining() != secondServ.buf.limit()) {
+                        secondServ.buf.flip();
+                        super.writeData(data);
+                        secondServ.buf.compact();
+                } else {
+                        super.writeData(data);
+                }
 //                log.log(Level.FINEST, "{0} written data: {1}, remaining: {2}", new Object[] { this, remaining - waitingToSendSize(), waitingToSendSize() });
                 transferInProgress.unlock();
         }
 
-        public void clearBuffer() {
-                if (buf != null && !buf.hasRemaining()) {
-                        log.log(Level.FINEST, "{0} clearing buffer!", new Object[] { this });
-                        buf.clear();
-                }
-        }
+//        public void clearBuffer() {
+//                // should not be needed any more
+//                if (buf != null && !buf.hasRemaining()) {
+//                        log.log(Level.FINEST, "{0} would clear buffer!", new Object[] { this });
+////                        buf.clear();
+//                }
+//        }
         
         @Override
         public void forceStop() {
@@ -301,9 +310,9 @@ public class Socks5IOService<RefObject> extends IOService<RefObject> {
 //                                        buf.flip();
                                         stream.proxy(buffer, this);
 //                                        buffer.clear();
-                                        if (!buffer.hasRemaining()) {
-                                                buffer.clear();
-                                        }
+//                                        if (!buffer.hasRemaining()) {
+//                                                buffer.clear();
+//                                        }
                                 }
                                 catch (IOException ex) {
                                         if (log.isLoggable(Level.FINEST)) {

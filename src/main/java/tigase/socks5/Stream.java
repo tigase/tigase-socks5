@@ -138,7 +138,9 @@ public class Stream {
 //                }
         if (!con.waitingToSend()) {
 	        con.writeBytes(buf);
+//        } else {
         }
+		buf.compact();
 	}
 	
         /**

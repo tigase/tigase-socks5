@@ -136,8 +136,11 @@ public class Stream {
 //                if (log.isLoggable(Level.FINEST)) {
 //                        log.log(Level.FINEST, "writing data to connection = {0}", con);
 //                }
-                                
-		con.writeBytes(buf);
+        if (!con.waitingToSend()) {
+	        con.writeBytes(buf);
+//        } else {
+        }
+		buf.compact();
 	}
 	
         /**
@@ -166,7 +169,16 @@ public class Stream {
                         if (conns[i] != null) {
                                 bytesRead += conns[i].getBytesReceived();
                                 if (!conns[i].waitingToSend()) {
+                                	if (log.isLoggable(Level.FINEST)) {
+		                                log.log(Level.FINEST, "stopping connection {0}, bytes read: {1}, written: {2}", new Object[]{conns[i], conns[i].getBytesReceived(), conns[i].getBytesSent()});
+	                                }
                                         conns[i].stop();
+                                } else {
+                                	if (log.isLoggable(Level.FINEST)) {
+		                                log.log(Level.FINEST, "stopping connection after flushing {0}, bytes read: {1}, written: {2}", new Object[]{conns[i], conns[i].getBytesReceived(), conns[i].getBytesSent()});
+	                                }
+                                	conns[i].writeData(null);
+	                                conns[i].stop();
                                 }
                         }
 			//conns[i] = null;			

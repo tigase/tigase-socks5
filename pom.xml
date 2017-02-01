@@ -15,7 +15,7 @@
 	<groupId>tigase</groupId>
 	<artifactId>tigase-socks5</artifactId>
 	<name>Tigase Socks5 Component</name>
-	<version>1.2.1-SNAPSHOT</version>
+	<version>1.3.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 	<description>SOCKS5 proxy component for Tigase</description>
 	<url>http://www.tigase.org</url>
@@ -191,7 +191,7 @@
 		<dependency>
 			<groupId>tigase</groupId>
 			<artifactId>tigase-server</artifactId>
-			<version>7.1.0</version>
+			<version>7.2.0-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>

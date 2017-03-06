@@ -21,7 +21,7 @@
  */
 package tigase.socks5.repository;
 
-import java.util.Map;
+import tigase.db.DataSource;
 import tigase.db.TigaseDBException;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
@@ -36,7 +36,7 @@ public class DummySocks5Repository implements Socks5Repository {
 	private final Limits limits = new Limits();
 	
 	@Override
-	public void initRepository(String connectionString, Map<String, String> params) throws TigaseDBException {
+	public void setDataSource(DataSource dataSource) {
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public class DummySocks5Repository implements Socks5Repository {
 	}
 
 	@Override
-	public void updateTransferUsedByConnection(long stream_id, long transferred_bytes) throws TigaseDBException {		
+	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes) throws TigaseDBException {
 	}
 	
 }

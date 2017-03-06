@@ -4,21 +4,16 @@
  */
 package tigase.socks5.verifiers;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-import java.util.logging.Level;
 import tigase.db.TigaseDBException;
-import tigase.socks5.Limits;
-import tigase.socks5.QuotaException;
-import tigase.socks5.Socks5ConnectionType;
-import tigase.socks5.Socks5IOService;
-import tigase.socks5.Socks5ProxyComponent;
-import tigase.socks5.Stream;
-import tigase.socks5.VerifierIfc;
+import tigase.kernel.beans.Inject;
+import tigase.kernel.beans.config.ConfigField;
+import tigase.socks5.*;
 import tigase.socks5.repository.Socks5Repository;
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -33,14 +28,6 @@ public class LimitsVerifier implements VerifierIfc {
         
         private static final int MB = 1024*1024;
         
-        // Configuration keys
-        private static final String TRANSFER_UPDATE_QUANTIZATION_KEY = "transfer-update-quantization";
-        private static final String DEFAULT_TRANSFER_LIMIT_PER_FILE_KEY = "default-file-limit";
-        private static final String DEFAULT_TRANSFER_LIMIT_PER_USER_KEY = "default-user-limit";
-        private static final String DEFAULT_TRANSFER_LIMIT_PER_DOMAIN_KEY = "default-domain-limit";
-        private static final String TRANSFER_GLOBAL_LIMIT_KEY = "global-limit";
-        private static final String TRANSFER_INSTANCE_LIMIT_KEY = "instance-limit";
-
         // Default values
         private static final int TRANSFER_UPDATE_QUANTIZATION_VAL = 1024 * 1024;
         private static final long DEFAULT_TRANSFER_LIMIT_PER_FILE_VAL = 10 * MB;
@@ -50,60 +37,21 @@ public class LimitsVerifier implements VerifierIfc {
         private static final long TRANSFER_INSTANCE_LIMIT_VAL = 0 * MB;
         
         // local variables
+        @Inject
         private Socks5ProxyComponent proxyComponent;
+        @ConfigField(desc = "Quantization", alias = "transfer-update-quantization")
         private int transferUpdateQuantization = TRANSFER_UPDATE_QUANTIZATION_VAL;
         
+        @ConfigField(desc = "Transfer limit per file", alias = "default-file-limit")
         private long defaultTransferLimitPerFile = DEFAULT_TRANSFER_LIMIT_PER_FILE_VAL;
+        @ConfigField(desc = "Transfer limit per user", alias = "default-user-limit")
         private long defaultTransferLimitPerUser = DEFAULT_TRANSFER_LIMIT_PER_USER_VAL;
+        @ConfigField(desc = "Transfer limit per domain", alias = "default-domain-limit")
         private long defaultTransferLimitPerDomain = DEFAULT_TRANSFER_LIMIT_PER_DOMAIN_VAL;
+        @ConfigField(desc = "Global transfer limit", alias = "global-limit")
         private long transferGlobalLimit = TRANSFER_GLOBAL_LIMIT_VAL;
+        @ConfigField(desc = "Instance transfer limit", alias = "instance-limit")
         private long transferInstanceLimit = TRANSFER_INSTANCE_LIMIT_VAL;
-        
-        @Override
-        public void setProxyComponent(Socks5ProxyComponent proxyComponent) {
-                this.proxyComponent = proxyComponent;
-        }
-
-        @Override
-        public Map<String, Object> getDefaults() {
-                Map<String, Object> props = new HashMap<String, Object>();
-                props.put(TRANSFER_UPDATE_QUANTIZATION_KEY, TRANSFER_UPDATE_QUANTIZATION_VAL);
-                
-                props.put(DEFAULT_TRANSFER_LIMIT_PER_FILE_KEY, DEFAULT_TRANSFER_LIMIT_PER_FILE_VAL);
-                props.put(DEFAULT_TRANSFER_LIMIT_PER_USER_KEY, DEFAULT_TRANSFER_LIMIT_PER_USER_VAL);
-                props.put(DEFAULT_TRANSFER_LIMIT_PER_DOMAIN_KEY, DEFAULT_TRANSFER_LIMIT_PER_DOMAIN_VAL);
-                
-                props.put(TRANSFER_GLOBAL_LIMIT_KEY, TRANSFER_GLOBAL_LIMIT_VAL);
-                props.put(TRANSFER_INSTANCE_LIMIT_KEY, TRANSFER_INSTANCE_LIMIT_VAL);
-                return props;
-        }
-        
-        @Override
-        public void setProperties(Map<String, Object> props) {
-                if (props.containsKey(TRANSFER_UPDATE_QUANTIZATION_KEY)) {
-                        transferUpdateQuantization = (Integer) props.get(TRANSFER_UPDATE_QUANTIZATION_KEY);
-                }                        
-                
-                if (props.get(DEFAULT_TRANSFER_LIMIT_PER_FILE_KEY) != null) {
-                    defaultTransferLimitPerFile = (Long) props.get(DEFAULT_TRANSFER_LIMIT_PER_FILE_KEY);
-                }
-                
-                if (props.get(DEFAULT_TRANSFER_LIMIT_PER_USER_KEY) != null) {
-                    defaultTransferLimitPerUser = (Long) props.get(DEFAULT_TRANSFER_LIMIT_PER_USER_KEY);
-                }
-                
-                if (props.get(DEFAULT_TRANSFER_LIMIT_PER_DOMAIN_KEY) != null) {
-                    defaultTransferLimitPerDomain = (Long) props.get(DEFAULT_TRANSFER_LIMIT_PER_DOMAIN_KEY);
-                }
-                
-                if (props.get(TRANSFER_GLOBAL_LIMIT_KEY) != null) {
-                    transferGlobalLimit = (Long) props.get(TRANSFER_GLOBAL_LIMIT_KEY);
-                }
-
-                if (props.get(TRANSFER_INSTANCE_LIMIT_KEY) != null) {
-                    transferInstanceLimit = (Long) props.get(TRANSFER_INSTANCE_LIMIT_KEY);
-                }
-        }
         
         @Override
         public boolean isAllowed(Stream stream) throws TigaseDBException {
@@ -245,7 +193,7 @@ public class LimitsVerifier implements VerifierIfc {
                 }
                 
                 if (!isNew || force) {
-                        repo.updateTransferUsedByConnection(conn_id, transferred);
+                        repo.updateTransferUsedByConnection(service.getJID().getBareJID(), conn_id, transferred);
                 }
                 
                 service.getSessionData().put(LAST_TRANSFERRED_BYTES_KEY, transferred);

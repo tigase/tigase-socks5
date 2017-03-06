@@ -31,65 +31,50 @@ package tigase.socks5.repository;
 //~--- non-JDK imports --------------------------------------------------------
 
 import tigase.db.DataRepository;
-import tigase.db.DBInitException;
-import tigase.db.RepositoryFactory;
+import tigase.db.Repository;
 import tigase.db.TigaseDBException;
 import tigase.db.UserExistsException;
-
+import tigase.kernel.beans.config.ConfigField;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
-
 import tigase.xmpp.BareJID;
-
-//~--- JDK imports ------------------------------------------------------------
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
-
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Map;
+
+//~--- JDK imports ------------------------------------------------------------
 
 /**
  *
  * @author andrzej
  */
+@Repository.Meta(supportedUris = {"jdbc:.*"})
 public class JDBCSocks5Repository
-				implements Socks5Repository {
-	private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_KEY =
-			"create-transfer-used-by-connection";
+				implements Socks5Repository<DataRepository> {
 	private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY =
 			"{ call TigSocks5CreateTransferUsed(?, ?, ?) }";
-	private static final String DEF_CREATE_UID_KEY             = "create-uid";
 	private static final String DEF_CREATE_UID_QUERY = "{ call TigSocks5CreateUid(?, ?) }";
-	private static final String DEF_GET_UID_KEY                = "get-uid";
 	private static final String DEF_GET_UID_QUERY = "{ call TigSocks5GetUid(?) }";
 	private static final String DEF_GLOBAL_SETTINGS            = "socks5-global";
-	private static final String DEF_TRANSFER_LIMITS_DOMAIN_KEY = "file-size-limit-domain";
 	private static final String DEF_TRANSFER_LIMITS_DOMAIN_QUERY =
 			"{ call TigSocks5GetTransferLimits(?) }";
-	private static final String DEF_TRANSFER_LIMITS_GENERAL_KEY = "file-size-limit-general";
 	private static final String DEF_TRANSFER_LIMITS_GENERAL_QUERY =
 			"{ call TigSocks5GetTransferLimits(?) }";
-	private static final String DEF_TRANSFER_LIMITS_USER_KEY = "file-size-limit-user";
 	private static final String DEF_TRANSFER_LIMITS_USER_QUERY =
 			"{ call TigSocks5GetTransferLimits(?) }";
-	private static final String DEF_TRANSFER_USED_DOMAIN_KEY = "transfer-used-domain";
 	private static final String DEF_TRANSFER_USED_DOMAIN_QUERY =
 			"{ call TigSocks5TransferUsedDomain(?) }";
-	private static final String DEF_TRANSFER_USED_GENERAL_KEY = "transfer-used-general";
 	private static final String DEF_TRANSFER_USED_GENERAL_QUERY =
 			"{ call TigSocks5TransferUsedGeneral() }";
-	private static final String DEF_TRANSFER_USED_INSTANCE_KEY = "transfer-used-instance";
 	private static final String DEF_TRANSFER_USED_INSTANCE_QUERY =
 			"{ call TigSocks5TransferUsedInstance(?) }";
-	private static final String DEF_TRANSFER_USED_USER_KEY = "transfer-used-user";
 	private static final String DEF_TRANSFER_USED_USER_QUERY =
 			"{ call TigSocks5TransferUsedUser(?) }";
-	private static final String DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_KEY =
-			"update-transfer-used-by-connection";
 	private static final String DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY =
 			"{ call TigSocks5UpdateTransferUsed(?, ?) }";
 	private static final Logger log = Logger.getLogger(Socks5Repository.class
@@ -99,17 +84,28 @@ public class JDBCSocks5Repository
 
 	/** Field description */
 	protected DataRepository data_repo;
-	private String           createTransferUsedByConnection_query = null;
-	private String           createUid_query                      = null;
-	private String           getUid_query                         = null;
-	private String           transferLimitsDomain_query           = null;
-	private String           transferLimitsGeneral_query          = null;
-	private String           transferLimitsUser_query             = null;
-	private String           transferUsedDomain_query             = null;
-	private String           transferUsedGeneral_query            = null;
-	private String           transferUsedInstance_query           = null;
-	private String           transferUsedUser_query               = null;
-	private String           updateTransferUsedByConnection_query = null;
+	@ConfigField(desc = "Query to create an entry for data transferred over connection", alias = "create-transfer-used-by-connection")
+	private String           createTransferUsedByConnection_query = DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY;
+	@ConfigField(desc = "Query to create UID", alias = "create-uid")
+	private String           createUid_query                      = DEF_CREATE_UID_QUERY;
+	@ConfigField(desc = "Query to retrieve UID", alias = "get-uid")
+	private String           getUid_query                         = DEF_GET_UID_QUERY;
+	@ConfigField(desc = "Query to get file transfer limit for domain", alias = "file-size-limit-domain")
+	private String           transferLimitsDomain_query           = DEF_TRANSFER_LIMITS_DOMAIN_QUERY;
+	@ConfigField(desc = "Query to get file transfer limit", alias = "file-size-limit-general" )
+	private String           transferLimitsGeneral_query          = DEF_TRANSFER_LIMITS_GENERAL_QUERY;
+	@ConfigField(desc = "Query to get file transfer limit for user", alias = "file-size-limit-user")
+	private String           transferLimitsUser_query             = DEF_TRANSFER_LIMITS_USER_QUERY;
+	@ConfigField(desc = "Query to get transfer used by users of a domain", alias = "transfer-used-domain")
+	private String           transferUsedDomain_query             = DEF_TRANSFER_USED_DOMAIN_QUERY;
+	@ConfigField(desc = "Query to get transfer used", alias = "transfer-used-general")
+	private String           transferUsedGeneral_query            = DEF_TRANSFER_USED_GENERAL_QUERY;
+	@ConfigField(desc = "Query to get transfer used by cluster node", alias = "transfer-used-instance")
+	private String           transferUsedInstance_query           = DEF_TRANSFER_USED_INSTANCE_QUERY;
+	@ConfigField(desc = "Query to get transfer used by particular user", alias = "transfer-used-user")
+	private String           transferUsedUser_query               = DEF_TRANSFER_USED_USER_QUERY;
+	@ConfigField(desc = "Query to update transfer used by a single connection", alias = "update-transfer-used-by-connection")
+	private String           updateTransferUsedByConnection_query = DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY;
 
 	//~--- methods --------------------------------------------------------------
 
@@ -135,7 +131,7 @@ public class JDBCSocks5Repository
 		try {
 			ResultSet rs           = null;
 			PreparedStatement createTransferUsedByConnection = data_repo.getPreparedStatement(
-					null, createTransferUsedByConnection_query);
+					user, createTransferUsedByConnection_query);
 
 			synchronized (createTransferUsedByConnection) {
 				try {
@@ -171,103 +167,40 @@ public class JDBCSocks5Repository
 		return connectionId;
 	}
 
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param connectionString
-	 * @param params
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
-	public void initRepository(String connectionString, Map<String, String> params)
-					throws TigaseDBException {
+	public void setDataSource(DataRepository data_repo) {
 		try {
-			data_repo = RepositoryFactory.getDataRepository(null, connectionString, params);
-			createUid_query = getParamWithDef(params, DEF_CREATE_UID_KEY, DEF_CREATE_UID_QUERY);
-			if (createUid_query != null) {
-				data_repo.initPreparedStatement(createUid_query, createUid_query);
-			}
-			getUid_query = getParamWithDef(params, DEF_GET_UID_KEY, DEF_GET_UID_QUERY);
-			if (getUid_query != null) {
-				data_repo.initPreparedStatement(getUid_query, getUid_query);
-			}
-			transferLimitsGeneral_query = getParamWithDef(params,
-					DEF_TRANSFER_LIMITS_GENERAL_KEY, DEF_TRANSFER_LIMITS_GENERAL_QUERY);
-			if (transferLimitsGeneral_query != null) {
-				data_repo.initPreparedStatement(transferLimitsGeneral_query,
-						transferLimitsGeneral_query);
-			}
-			transferLimitsDomain_query = getParamWithDef(params,
-					DEF_TRANSFER_LIMITS_DOMAIN_KEY, DEF_TRANSFER_LIMITS_DOMAIN_QUERY);
-			if (transferLimitsDomain_query != null) {
-				data_repo.initPreparedStatement(transferLimitsDomain_query,
-						transferLimitsDomain_query);
-			}
-			transferLimitsUser_query = getParamWithDef(params, DEF_TRANSFER_LIMITS_USER_KEY,
-					DEF_TRANSFER_LIMITS_USER_QUERY);
-			if (transferLimitsUser_query != null) {
-				data_repo.initPreparedStatement(transferLimitsUser_query,
-						transferLimitsUser_query);
-			}
-			transferUsedGeneral_query = getParamWithDef(params, DEF_TRANSFER_USED_GENERAL_KEY,
-					DEF_TRANSFER_USED_GENERAL_QUERY);
-			if (transferUsedGeneral_query != null) {
-				data_repo.initPreparedStatement(transferUsedGeneral_query,
-						transferUsedGeneral_query);
-			}
-			transferUsedInstance_query = getParamWithDef(params,
-					DEF_TRANSFER_USED_INSTANCE_KEY, DEF_TRANSFER_USED_INSTANCE_QUERY);
-			if (transferUsedInstance_query != null) {
-				data_repo.initPreparedStatement(transferUsedInstance_query,
-						transferUsedInstance_query);
-			}
-			transferUsedDomain_query = getParamWithDef(params, DEF_TRANSFER_USED_DOMAIN_KEY,
-					DEF_TRANSFER_USED_DOMAIN_QUERY);
-			if (transferUsedDomain_query != null) {
-				data_repo.initPreparedStatement(transferUsedDomain_query,
-						transferUsedDomain_query);
-			}
-			transferUsedUser_query = getParamWithDef(params, DEF_TRANSFER_USED_USER_KEY,
-					DEF_TRANSFER_USED_USER_QUERY);
-			if (transferUsedUser_query != null) {
-				data_repo.initPreparedStatement(transferUsedUser_query, transferUsedUser_query);
-			}
-			createTransferUsedByConnection_query = getParamWithDef(params,
-					DEF_CREATE_TRANSFER_USED_BY_CONNECTION_KEY,
-					DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY);
-			if (createTransferUsedByConnection_query != null) {
-				data_repo.initPreparedStatement(createTransferUsedByConnection_query,
-						createTransferUsedByConnection_query);
-			}
-			updateTransferUsedByConnection_query = getParamWithDef(params,
-					DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_KEY,
-					DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY);
-			if (updateTransferUsedByConnection_query != null) {
-				data_repo.initPreparedStatement(updateTransferUsedByConnection_query,
-						updateTransferUsedByConnection_query);
-			}
+			data_repo.initPreparedStatement(createUid_query, createUid_query);
+			data_repo.initPreparedStatement(getUid_query, getUid_query);
+			data_repo.initPreparedStatement(transferLimitsGeneral_query, transferLimitsGeneral_query);
+			data_repo.initPreparedStatement(transferLimitsDomain_query, transferLimitsDomain_query);
+			data_repo.initPreparedStatement(transferLimitsUser_query, transferLimitsUser_query);
+			data_repo.initPreparedStatement(transferUsedGeneral_query, transferUsedGeneral_query);
+			data_repo.initPreparedStatement(transferUsedInstance_query, transferUsedInstance_query);
+			data_repo.initPreparedStatement(transferUsedDomain_query, transferUsedDomain_query);
+			data_repo.initPreparedStatement(transferUsedUser_query, transferUsedUser_query);
+			data_repo.initPreparedStatement(createTransferUsedByConnection_query, createTransferUsedByConnection_query);
+			data_repo.initPreparedStatement(updateTransferUsedByConnection_query, updateTransferUsedByConnection_query);
 		} catch (Exception ex) {
-			throw new DBInitException(ex.getMessage(), ex);
+			throw new RuntimeException(ex.getMessage(), ex);
 		}
 	}
 
 	/**
 	 * Method description
 	 *
-	 *
+	 * @param user_id
 	 * @param stream_id
 	 * @param transferred_bytes
 	 *
 	 * @throws TigaseDBException
 	 */
 	@Override
-	public void updateTransferUsedByConnection(long stream_id, long transferred_bytes)
+	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes)
 					throws TigaseDBException {
 		try {
 			PreparedStatement updateTransferUsedByConnection = data_repo.getPreparedStatement(
-					null, updateTransferUsedByConnection_query);
+					user_id, updateTransferUsedByConnection_query);
 
 			synchronized (updateTransferUsedByConnection) {
 				updateTransferUsedByConnection.setLong(1, stream_id);
@@ -382,7 +315,7 @@ public class JDBCSocks5Repository
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferLimitsUser = data_repo.getPreparedStatement(null,
+			PreparedStatement transferLimitsUser = data_repo.getPreparedStatement(user,
 					transferLimitsUser_query);
 
 			synchronized (transferLimitsUser) {
@@ -544,7 +477,7 @@ public class JDBCSocks5Repository
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferUsedUser = data_repo.getPreparedStatement(null,
+			PreparedStatement transferUsedUser = data_repo.getPreparedStatement(user,
 					transferUsedUser_query);
 
 			synchronized (transferUsedUser) {

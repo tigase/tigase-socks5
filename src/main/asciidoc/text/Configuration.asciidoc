@@ -1,0 +1,70 @@
+= Configuration
+
+== Enabling proxy
+To enable Tigase Socks5 Proxy component for Tigase XMPP Server, you need to activate `socks5` component in Tigase XMPP Server configuration file (`etc/init.properties`).
+In simples solution it will work without ability to enforce any limits but will also work without a need of database to store informations about used bandwidth.
+
+.Simple configuration
+[source,dsl]
+----
+socks5 () {
+    repository {
+	    default () {
+	        cls = 'dummy'
+	    }
+    }
+}
+----
+
+== Enabling limits
+To enable limits you need to import schema files proper for your database and related to Tigase Socks5 Proxy component from `database` directory.
+
+Now it is possible to enable limits verifier by replacing entries related to Tigase Socks5 Proxy component configuration with following entries.
+This will use default database configured to use with Tigase XMPP Server.
+
+.Configuration with default limits enabled
+[source,dsl]
+----
+socks5 () {
+    verifier (class: tigase.socks5.verifiers.LimitsVerifier) {
+    }
+}
+----
+
+=== Configuring limits
+Following properties are possible to be set for `LimitsVerifier`:
+
+transfer-update-quantization:: which value is used to quantitize value to check if value of transferred bytes should be updated in database or not. By default it is 1MB. (Low value can slow down file transfer while high value can allow to exceed quota)
+global-limit:: limit for all domains
+instance-limit:: limit for server instance
+default-domain-limit:: default limit per domain
+default-user-limit:: default limit per user
+default-file-limit:: default limit per file
+
+Using the default database schema in table tig_socks5_users limits can be specified. Value of the field _user_id_ denotes the scope of the limitation:
+
+* _domain_name_ defines limits for users which JIDs are within that domain;
+* _JID_ of the user defines limit for this exact user.
+
+Value of the limit bigger than 0 defines exact value. If value is equal 0 limit is not override and more global limit is used. If value equals -1 proxy will forbid any transfer for this user. It there is no value for user in this table new row will be created during first transfer and limits for domain or global limits will be used.
+
+== Using separate database
+To use separate database with Tigase Socks5 Proxy component you need to configure new `DataSource` in `dataSource` section.
+Here we will use `socks5-store` as name of newly configured data source.
+Additionally you need to pass name of newly configured data source to `dataSourceName` property of `default` repository of Tigase Socks5 Proxy component.
+----
+dataSource {
+    socks5-store () {
+        uri = 'jdbc:db_server_type://server/socks5-database'
+    }
+}
+
+socks5 () {
+    repository {
+        default () {
+            dataSourceName = 'socks5-store'
+        }
+    }
+    ....
+}
+----

@@ -30,37 +30,31 @@ import tigase.cluster.api.ClusterCommandException;
 import tigase.cluster.api.ClusterControllerIfc;
 import tigase.cluster.api.ClusteredComponentIfc;
 import tigase.cluster.api.CommandListenerAbstract;
-
 import tigase.db.TigaseDBException;
-import tigase.db.UserRepository;
-
+import tigase.kernel.beans.Bean;
+import tigase.kernel.beans.Initializable;
+import tigase.kernel.beans.Inject;
+import tigase.kernel.beans.config.ConfigField;
+import tigase.kernel.core.Kernel;
 import tigase.server.Iq;
 import tigase.server.Message;
 import tigase.server.Packet;
 import tigase.server.Priority;
-
-import tigase.xmpp.Authorization;
-import tigase.xmpp.JID;
-import tigase.xmpp.PacketErrorTypeException;
-import tigase.xmpp.StanzaType;
-
-import tigase.conf.ConfigurationException;
 import tigase.socks5.repository.Socks5Repository;
 import tigase.util.Algorithms;
 import tigase.util.DNSEntry;
 import tigase.util.DNSResolverFactory;
 import tigase.util.TigaseStringprepException;
 import tigase.xml.Element;
+import tigase.xmpp.Authorization;
+import tigase.xmpp.JID;
+import tigase.xmpp.PacketErrorTypeException;
+import tigase.xmpp.StanzaType;
 
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,32 +65,26 @@ import java.util.logging.Logger;
  * @version        Enter version here..., 13/02/16
  * @author         <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
  */
+@Bean(name = "socks5", parent = Kernel.class, active = false)
 public class Socks5ProxyComponent
 				extends Socks5ConnectionManager
-				implements ClusteredComponentIfc {
+				implements ClusteredComponentIfc, Initializable {
 	private static final String[] IQ_QUERY_ACTIVATE_PATH = { "iq", "query", "activate" };
 	private static final Logger   log = Logger.getLogger(Socks5ProxyComponent.class
 			.getCanonicalName());
 	private static final String   PACKET_FORWARD_CMD          = "socks5-packet-forward";
-	private static final String   PARAMS_REPO_NODE            = "repo-params";
-	private static final String   PARAMS_REPO_URL             = "repo-url";
-	private static final String   PARAMS_VERIFIER_NODE        = "verifier-params";
 	private static final String[] QUERY_ACTIVATE_PATH         = { "query", "activate" };
-	private static final String   REMOTE_ADDRESSES_KEY        = "remote-addresses";
-	private static final String   SOCKS5_REPOSITORY_CLASS_KEY = "socks5-repo-cls";
-	private static final String   SOCKS5_REPOSITORY_CLASS_VAL =
-			"tigase.socks5.repository.DummySocks5Repository";
-	private static final String VERIFIER_CLASS_KEY = "verifier-class";
-	private static final String VERIFIER_CLASS_VAL =
-			"tigase.socks5.verifiers.DummyVerifier";
 	private static final String XMLNS_BYTESTREAMS =
 			"http://jabber.org/protocol/bytestreams";
 
 	//~--- fields ---------------------------------------------------------------
 
 	private ClusterControllerIfc clusterController = null;
+	@ConfigField(desc = "Remote IP addresses", alias = "remote-addresses")
 	private String[]             remoteAddresses   = null;
+	@Inject
 	private Socks5Repository     socks5_repo       = null;
+	@Inject
 	private VerifierIfc          verifier          = null;
 	private PacketForward        packetForwardCmd  = new PacketForward();
 	private final List<JID>      cluster_nodes     = new LinkedList<JID>();
@@ -338,24 +326,6 @@ public class Socks5ProxyComponent
 	//~--- get methods ----------------------------------------------------------
 
 	/**
-	 * Method description
-	 *
-	 *
-	 * @param params
-	 *
-	 * @return
-	 */
-	@Override
-	public Map<String, Object> getDefaults(Map<String, Object> params) {
-		Map<String, Object> props = super.getDefaults(params);
-
-		props.put(SOCKS5_REPOSITORY_CLASS_KEY, SOCKS5_REPOSITORY_CLASS_VAL);
-		props.put(VERIFIER_CLASS_KEY, VERIFIER_CLASS_VAL);
-
-		return props;
-	}
-
-	/**
 	 * Returns disco category
 	 *
 	 * @return
@@ -393,6 +363,14 @@ public class Socks5ProxyComponent
 		return socks5_repo;
 	}
 
+	@Override
+	public void initialize() {
+		super.initialize();
+
+		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(),
+								   getDiscoCategory(), getDiscoCategoryType(), false, XMLNS_BYTESTREAMS);
+	}
+
 	//~--- set methods ----------------------------------------------------------
 
 	/**
@@ -406,93 +384,6 @@ public class Socks5ProxyComponent
 		clusterController = cl_controller;
 		clusterController.removeCommandListener(packetForwardCmd);
 		clusterController.setCommandListener(packetForwardCmd);
-	}
-
-	/**
-	 * Method description
-	 *
-	 *
-	 * @param props
-	 */
-	@Override
-	@SuppressWarnings("unchecked")
-	public void setProperties(Map<String, Object> props) throws ConfigurationException {
-		super.setProperties(props);
-
-		Map<String, Object> verifierProps = null;
-
-		if (props.size() > 1) {
-			String socks5RepoCls = (String) props.get(SOCKS5_REPOSITORY_CLASS_KEY);
-
-			if (socks5RepoCls == null) {
-				socks5RepoCls = SOCKS5_REPOSITORY_CLASS_VAL;
-			}
-			try {
-				String connectionString = (String) props.get(PARAMS_REPO_URL);
-
-				if (connectionString == null) {
-					UserRepository user_repo = (UserRepository) props.get(
-							SHARED_USER_REPO_PROP_KEY);
-
-					if (user_repo != null) {
-						connectionString = user_repo.getResourceUri();
-					}
-				}
-
-				Map<String, String> params = new HashMap<String, String>(10);
-
-				for (Map.Entry<String, Object> entry : props.entrySet()) {
-					if (entry.getKey().startsWith(PARAMS_REPO_NODE)) {
-						String[] nodes = entry.getKey().split("/");
-
-						if (nodes.length > 1) {
-							params.put(nodes[1], entry.getValue().toString());
-						}
-					}
-				}
-
-				Socks5Repository socks5_repo = (Socks5Repository) Class.forName(socks5RepoCls)
-						.newInstance();
-
-				socks5_repo.initRepository(connectionString, params);
-				this.socks5_repo = socks5_repo;
-			} catch (Exception ex) {
-				log.log(Level.SEVERE, "An error initializing data repository pool: ", ex);
-			}
-
-			String verifierCls = (String) props.get(VERIFIER_CLASS_KEY);
-
-			if (verifierCls == null) {
-				verifierCls = VERIFIER_CLASS_VAL;
-			}
-			try {
-				verifier      = (VerifierIfc) Class.forName(verifierCls).newInstance();
-				verifierProps = verifier.getDefaults();
-				verifier.setProxyComponent(this);
-			} catch (Exception ex) {
-				Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null,
-						ex);
-			}
-		} else {
-			verifierProps = new HashMap<String, Object>();
-		}
-		if (props.containsKey(REMOTE_ADDRESSES_KEY)) {
-			remoteAddresses = (String[]) props.get(REMOTE_ADDRESSES_KEY);
-		}
-		if (verifier != null) {
-			for (Map.Entry<String, Object> entry : props.entrySet()) {
-				if (entry.getKey().startsWith(PARAMS_VERIFIER_NODE)) {
-					String[] nodes = entry.getKey().split("/");
-
-					if (nodes.length > 1) {
-						verifierProps.put(nodes[1], entry.getValue());
-					}
-				}
-			}
-			verifier.setProperties(verifierProps);
-		}
-		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(),
-				getDiscoCategory(), getDiscoCategoryType(), false, XMLNS_BYTESTREAMS);
 	}
 
 	//~--- methods --------------------------------------------------------------

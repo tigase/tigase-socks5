@@ -26,29 +26,21 @@ package tigase.socks5;
 
 //~--- non-JDK imports --------------------------------------------------------
 
+import tigase.kernel.beans.*;
+import tigase.kernel.beans.config.ConfigField;
+import tigase.kernel.beans.config.ConfigurationChangedAware;
+import tigase.kernel.core.Kernel;
+import tigase.net.*;
+import tigase.server.AbstractMessageReceiver;
+import tigase.stats.StatisticsList;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.conf.ConfigurationException;
-import tigase.net.ConnectionOpenListener;
-import tigase.net.ConnectionOpenThread;
-import tigase.net.ConnectionType;
-import tigase.net.IOService;
-import tigase.net.IOServiceListener;
-import tigase.net.SocketThread;
-import tigase.net.SocketType;
-import tigase.server.AbstractMessageReceiver;
-import tigase.stats.StatisticsList;
 
 /**
  * Class description
@@ -61,12 +53,9 @@ import tigase.stats.StatisticsList;
  */
 public abstract class AbstractConnectionManager<IO extends IOService<?>>
 				extends AbstractMessageReceiver
-				implements IOServiceListener<IO> {
+				implements IOServiceListener<IO>, RegistrarBean {
 	/** Field description */
 	protected static final int NET_BUFFER_HT_PROP_VAL = 64 * 1024;
-
-	/** Field description */
-	protected static final String NET_BUFFER_PROP_KEY = "net-buffer";
 
 	/** Field description */
 	protected static final int NET_BUFFER_ST_PROP_VAL = 2 * 1024;
@@ -104,7 +93,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	protected Map<String, IO>               services = new ConcurrentHashMap<String, IO>();
 	private long                            bytesReceived  = 0;
 	private long                            bytesSent      = 0;
-	private int[]                           ports          = null;
 	private long                            socketOverflow = 0;
 	private LinkedList<Map<String, Object>> waitingTasks = new LinkedList<Map<String,
 			Object>>();
@@ -114,7 +102,11 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	private boolean                   initializationCompleted = false;
 
 	/** Field description */
+	@ConfigField(desc = "Size of a network buffer", alias = "net-buffer")
 	protected int net_buffer = NET_BUFFER_ST_PROP_VAL;
+
+	@Inject
+	private PortsConfigBean		portsConfigBean = null;
 
 	//~--- methods --------------------------------------------------------------
 
@@ -135,10 +127,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	@Override
 	public void initializationCompleted() {
 		initializationCompleted = true;
-		for (Map<String, Object> params : waitingTasks) {
-			reconnectService(params, 2000);    // connectionDelay);
-		}
-		waitingTasks.clear();
 		super.initializationCompleted();
 	}
 
@@ -171,30 +159,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 		return true;
 	}
 
-	//~--- get methods ----------------------------------------------------------
-
-	/**
-	 * Returns map with default configuration based on parameters
-	 *
-	 * @param params
-	 * @return
-	 */
-	@Override
-	public Map<String, Object> getDefaults(Map<String, Object> params) {
-		Map<String, Object> props = super.getDefaults(params);
-
-		props.put(NET_BUFFER_PROP_KEY, NET_BUFFER_HT_PROP_VAL);
-
-		int[] ports = getDefaultPorts();
-
-		props.put(PORTS_PROP_KEY, ports);
-		for (int port : ports) {
-			putDefPortParams(props, port, SocketType.plain);
-		}
-
-		return props;
-	}
-
 	/**
 	 * Fill statistics list with statistics
 	 *
@@ -217,65 +181,43 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 		list.add(getName(), "Socket overflow", socketOverflow, Level.FINE);
 	}
 
-	//~--- set methods ----------------------------------------------------------
-
-	/**
-	 * Configure instance based on properties
-	 *
-	 * @param props
-	 * @throws tigase.conf.ConfigurationException
-	 */
 	@Override
-	public void setProperties(Map<String, Object> props) throws ConfigurationException {
-		super.setProperties(props);
-		if (props.get(NET_BUFFER_PROP_KEY) != null) {
-			net_buffer = (Integer) props.get(NET_BUFFER_PROP_KEY);
-		}
-		if (props.size() == 1) {
+	public void register(Kernel kernel) {
 
-			// If props.size() == 1, it means this is a single property update and
-			// ConnectionManager does not support it yet.
-			return;
-		}
-		releaseListeners();
-		ports = (int[]) props.get(PORTS_PROP_KEY);
-		if (ports != null) {
-			for (int i = 0; i < ports.length; i++) {
-				Map<String, Object> port_props = new LinkedHashMap<String, Object>(20);
+	}
 
-				for (Map.Entry<String, Object> entry : props.entrySet()) {
-					if (entry.getKey().startsWith(PROP_KEY + ports[i])) {
-						int    idx = entry.getKey().lastIndexOf('/');
-						String key = entry.getKey().substring(idx + 1);
+	@Override
+	public void start() {
+		super.start();
+		connectWaitingTasks();
+	}
 
-						log.log(Level.CONFIG, "Adding port property key: {0}={1}", new Object[] { key,
-								entry.getValue() });
-						port_props.put(key, entry.getValue());
-					}    // end of if (entry.getKey().startsWith())
-				}      // end of for ()
-				port_props.put(PORT_KEY, ports[i]);
-				addWaitingTask(port_props);
+	@Override
+	public void stop() {
+		portsConfigBean.stop();
+		super.stop();
+	}
 
-				// reconnectService(port_props, startDelay);
-			}        // end of for (int i = 0; i < ports.length; i++)
-		}          // end of if (ports != null)
+	@Override
+	public void unregister(Kernel kernel) {
+		
 	}
 
 	//~--- methods --------------------------------------------------------------
 
-	/**
-	 * Assign task for delayed execution
-	 *
-	 * @param conn
-	 */
-	protected void addWaitingTask(Map<String, Object> conn) {
-		if (initializationCompleted) {
-			reconnectService(conn, 2000);    // connectionDelay);
-		} else {
-			waitingTasks.add(conn);
+	protected void connectWaitingTasks() {
+		if (log.isLoggable(Level.FINER)) {
+			log.log(Level.FINER, "Connecting waitingTasks: {0}",
+					new Object[]{waitingTasks});
 		}
-	}
 
+		for (Map<String, Object> params : waitingTasks) {
+			reconnectService(params, 2000);
+		}
+		waitingTasks.clear();
+		portsConfigBean.start();
+	}
+	
 	/**
 	 * Perform a given action defined by ServiceChecker for all active IOService
 	 * objects (active network connections).
@@ -313,7 +255,11 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	 * @return a value of <code>int[]</code>
 	 */
 	protected int[] getPorts() {
-		return this.ports;
+		Set<Integer> ports = this.portsConfigBean.getPorts();
+		if (ports == null) {
+			return new int[0];
+		}
+		return ports.stream().mapToInt(i -> i).toArray();
 	}
 
 	/**
@@ -326,31 +272,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	}
 
 	//~--- methods --------------------------------------------------------------
-
-	/**
-	 * Generate default port properties
-	 *
-	 * @param props
-	 * @param port
-	 * @param sock
-	 */
-	private void putDefPortParams(Map<String, Object> props, int port, SocketType sock) {
-		log.log(Level.CONFIG, "Generating defaults for port: {0}", port);
-		props.put(PROP_KEY + port + "/" + PORT_TYPE_PROP_KEY, ConnectionType.accept);
-		props.put(PROP_KEY + port + "/" + PORT_SOCKET_PROP_KEY, sock);
-		props.put(PROP_KEY + port + "/" + PORT_IFC_PROP_KEY, PORT_IFC_PROP_VAL);
-
-//  props.put(PROP_KEY + port + "/" + PORT_REMOTE_HOST_PROP_KEY,
-//      PORT_REMOTE_HOST_PROP_VAL);
-//  props.put(PROP_KEY + port + "/" + TLS_REQUIRED_PROP_KEY, TLS_REQUIRED_PROP_VAL);
-//  Map<String, Object> extra = getParamsForPort(port);
-//
-//  if (extra != null) {
-//    for (Map.Entry<String, Object> entry : extra.entrySet()) {
-//      props.put(PROP_KEY + port + "/" + entry.getKey(), entry.getValue());
-//    } // end of for ()
-//  } // end of if (extra != null)
-	}
 
 	/**
 	 * Reconnect service (bind port/connect)
@@ -383,6 +304,11 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 		}, delay);
 	}
 
+	protected void releaseListener(ConnectionOpenListener toStop) {
+		pending_open.remove(toStop);
+		connectThread.removeConnectionOpenListener(toStop);
+	}
+
 	/**
 	 * Release listeners
 	 */
@@ -393,7 +319,7 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 		pending_open.clear();
 	}
 
-	private void startService(Map<String, Object> port_props) {
+	private ConnectionListenerImpl startService(Map<String, Object> port_props) {
 		if (port_props == null) {
 			throw new NullPointerException("port_props cannot be null.");
 		}
@@ -404,8 +330,10 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 			pending_open.add(cli);
 		}
 		connectThread.addConnectionOpenListener(cli);
-	}
 
+		return cli;
+	}
+	
 	//~--- inner classes --------------------------------------------------------
 
 	private class ConnectionListenerImpl
@@ -597,6 +525,141 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 			socketOverflow += list.getValue("socketio", "Buffers overflow", -1l);
 		}
 	}
+
+	public static class PortConfigBean implements ConfigurationChangedAware, Initializable, UnregisterAware {
+
+		@Inject
+		private AbstractConnectionManager connectionManager;
+		private ConnectionOpenListener connectionOpenListener = null;
+
+		@ConfigField(desc = "Port")
+		private Integer name;
+
+		@ConfigField(desc = "Port type")
+		protected ConnectionType type = ConnectionType.accept;
+
+		@ConfigField(desc = "Socket type")
+		protected SocketType socket = SocketType.plain;
+
+		@ConfigField(desc = "Interface to listen on")
+		protected String[] ifc = null;
+
+		public PortConfigBean() {
+
+		}
+
+		@Override
+		public void beanConfigurationChanged(Collection<String> changedFields) {
+			if (connectionManager == null || !connectionManager.isInitializationComplete())
+				return;
+
+			if (connectionOpenListener != null)
+				connectionManager.releaseListener(connectionOpenListener);
+
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST, "connectionManager: {0}, changedFields: {1}, props: {2}",
+						new Object[]{connectionManager, changedFields, getProps()});
+			}
+
+			connectionOpenListener = connectionManager.startService(getProps());
+		}
+
+		@Override
+		public void beforeUnregister() {
+			if (connectionOpenListener != null)
+				connectionManager.releaseListener(connectionOpenListener);
+		}
+
+		protected Map<String, Object> getProps() {
+			Map<String, Object> props = new HashMap<>();
+			props.put(PORT_KEY, name);
+			props.put(PORT_TYPE_PROP_KEY, type);
+			props.put(PORT_SOCKET_PROP_KEY, socket);
+			if (ifc == null)
+				props.put(PORT_IFC_PROP_KEY, connectionManager.PORT_IFC_PROP_VAL);
+			else
+				props.put(PORT_IFC_PROP_KEY, ifc);
+			return props;
+		}
+
+		@Override
+		public void initialize() {
+			beanConfigurationChanged(Collections.emptyList());
+		}
+	}
+	
+	@Bean(name = "connections", parent = AbstractConnectionManager.class, active = true, exportable = true)
+	public static class PortsConfigBean implements RegistrarBeanWithDefaultBeanClass, Initializable {
+
+		@Inject
+		private AbstractConnectionManager connectionManager;
+
+		@Inject(nullAllowed = true)
+		private PortConfigBean[] portsBeans;
+
+		@ConfigField(desc = "Ports to enable", alias = "ports")
+		private HashSet<Integer> ports;
+
+		private Kernel kernel;
+
+		public PortsConfigBean() {
+
+		}
+
+		@Override
+		public Class<?> getDefaultBeanClass() {
+			return PortConfigBean.class;
+		}
+
+		public Set<Integer> getPorts() {
+			return ports;
+		}
+
+		@Override
+		public void register(Kernel kernel) {
+			this.kernel = kernel;
+			String connManagerBean = kernel.getParent().getName();
+			this.kernel.getParent().ln("service", kernel, connManagerBean);
+		}
+
+		@Override
+		public void unregister(Kernel kernel) {
+			this.kernel = null;
+		}
+
+		@Override
+		public void initialize() {
+			if (ports == null) {
+				int[] tmp = connectionManager.getDefaultPorts();
+				if (tmp != null) {
+					ports = new HashSet<>();
+					for (int i=0; i<tmp.length; i++) {
+						ports.add(tmp[i]);
+					}
+				}
+			}
+			
+			for (Integer port : ports) {
+				String name = String.valueOf(port);
+				if (kernel.getDependencyManager().getBeanConfig(name) == null) {
+					Class cls = getDefaultBeanClass();
+					kernel.registerBean(name).asClass(cls).exec();
+				}
+			}
+		}
+
+		public void start() {
+			if (portsBeans != null) {
+				Arrays.stream(portsBeans).forEach(portBean -> portBean.initialize());
+			}
+		}
+
+		public void stop() {
+			// nothing to do for now
+		}
+
+	}
+
 }
 
 

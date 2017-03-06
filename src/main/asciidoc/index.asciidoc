@@ -1,0 +1,18 @@
+= Tigase Socks5 Proxy
+Tigase Team <team@tigase.net>
+:toc:
+:toclevels: 3
+:numbered:
+:website: http://tigase.net
+:Date: 2016-11-12
+
+Welcome to Tigase Socks5 Proxy guide
+
+:leveloffset: 1
+
+include::text/Overview.asciidoc[]
+include::text/Configuration.asciidoc[]
+
+= Performance
+Tigase Socks5 Proxy component was tested with 100 concurrent transfers.
+Maximal traffic processed by component was 21,45MB/s on loopback interface. All XMPP clients and Tigase XMPP Server used in test were running on the single machine.

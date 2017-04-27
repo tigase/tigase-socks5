@@ -35,6 +35,8 @@ import tigase.kernel.beans.Bean;
 import tigase.kernel.beans.Initializable;
 import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.config.ConfigField;
+import tigase.kernel.beans.selector.ConfigType;
+import tigase.kernel.beans.selector.ConfigTypeEnum;
 import tigase.kernel.core.Kernel;
 import tigase.server.Iq;
 import tigase.server.Message;
@@ -66,6 +68,7 @@ import java.util.logging.Logger;
  * @author         <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
  */
 @Bean(name = "socks5", parent = Kernel.class, active = false)
+@ConfigType(ConfigTypeEnum.DefaultMode)
 public class Socks5ProxyComponent
 				extends Socks5ConnectionManager
 				implements ClusteredComponentIfc, Initializable {

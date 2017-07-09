@@ -47,7 +47,7 @@ create table tig_socks5_connections (
 	transferred_bytes bigint default 0,
 
 	-- timestamp of last part transfer
-	transfer_timestamp timestamp DEFAULT now(),
+	transfer_timestamp timestamp with time zone DEFAULT now(),
 
 	primary key (conn_id)
 );

@@ -169,7 +169,8 @@
 		
         <resources>
           <resource>
-            <directory>database</directory>
+            <directory>src/main/database</directory>
+			<targetPath>database</targetPath>
             <includes>
 				<include>**/*.sql</include>
 			</includes>

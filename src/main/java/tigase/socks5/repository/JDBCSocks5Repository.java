@@ -30,10 +30,7 @@ package tigase.socks5.repository;
 
 //~--- non-JDK imports --------------------------------------------------------
 
-import tigase.db.DataRepository;
-import tigase.db.Repository;
-import tigase.db.TigaseDBException;
-import tigase.db.UserExistsException;
+import tigase.db.*;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
@@ -54,6 +51,7 @@ import java.util.logging.Logger;
  * @author andrzej
  */
 @Repository.Meta(supportedUris = {"jdbc:.*"})
+@Repository.SchemaId(id = Schema.SOCKS5_SCHEMA_ID, name = Schema.SOCKS5_SCHEMA_NAME)
 public class JDBCSocks5Repository
 				implements Socks5Repository<DataRepository> {
 	private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY =

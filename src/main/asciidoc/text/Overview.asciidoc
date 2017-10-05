@@ -1,8 +1,10 @@
-
+[[socks5Overview]]
 = Overview
 :author: Andrzej Wójcik
-:date: 2017-03-06 20:38
+:version: v2.0 August 2017. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://tigase.net
 
 Tigase Socks5 Proxy is implementation of Socks5 proxy described in https://xmpp.org/extensions/xep-0065.html#mediated:[XEP-0065: SOCKS5 Bytestreams, in section 6. Mediated Connection] which provides support for Socks5 proxy for file transfers between XMPP client behind NATs to Tigase XMPP Server.
-
-

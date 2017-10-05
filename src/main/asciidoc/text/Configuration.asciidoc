@@ -1,7 +1,14 @@
+[[socks5Config]]
 = Configuration
+:author: Andrzej Wójcik
+:version: v2.0 August 2017. Reformatted for v7.2.0.
+
+:toc:
+:numbered:
+:website: http://tigase.netfd
 
 == Enabling proxy
-To enable Tigase Socks5 Proxy component for Tigase XMPP Server, you need to activate `socks5` component in Tigase XMPP Server configuration file (`etc/init.properties`).
+To enable Tigase Socks5 Proxy component for Tigase XMPP Server, you need to activate `socks5` component in Tigase XMPP Server configuration file (`etc/config.tdsl`).
 In simples solution it will work without ability to enforce any limits but will also work without a need of database to store informations about used bandwidth.
 
 .Simple configuration
@@ -52,6 +59,7 @@ Value of the limit bigger than 0 defines exact value. If value is equal 0 limit 
 To use separate database with Tigase Socks5 Proxy component you need to configure new `DataSource` in `dataSource` section.
 Here we will use `socks5-store` as name of newly configured data source.
 Additionally you need to pass name of newly configured data source to `dataSourceName` property of `default` repository of Tigase Socks5 Proxy component.
+[source,dsl]
 ----
 dataSource {
     socks5-store () {

@@ -199,3 +199,6 @@ end;
 ' LANGUAGE 'plpgsql';
 -- QUERY END:
 
+-- QUERY START:
+select TigSetComponentVersion('socks5', '2.0.0');
+-- QUERY END:

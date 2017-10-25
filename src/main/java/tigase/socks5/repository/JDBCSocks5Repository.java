@@ -168,6 +168,7 @@ public class JDBCSocks5Repository
 	@Override
 	public void setDataSource(DataRepository data_repo) {
 		try {
+			data_repo.checkSchemaVersion(this);
 			data_repo.initPreparedStatement(createUid_query, createUid_query);
 			data_repo.initPreparedStatement(getUid_query, getUid_query);
 			data_repo.initPreparedStatement(transferLimitsGeneral_query, transferLimitsGeneral_query);

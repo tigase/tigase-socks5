@@ -167,5 +167,8 @@ begin
 end //
 -- QUERY END:
 
+-- QUERY START:
+call TigSetComponentVersion('socks5', '2.0.0');
+-- QUERY END:
 
 delimiter ;

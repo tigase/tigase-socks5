@@ -139,3 +139,7 @@ CREATE procedure TigSocks5UpdateTransferUsed(cid bigint, transferredBytes bigint
 	MODIFIES SQL DATA
 	EXTERNAL NAME 'tigase.socks5.repository.derby.StoredProcedures.tigSocks5UpdateTransferUsed';
 -- QUERY END:
+
+-- QUERY START:
+call TigSetComponentVersion('socks5', '2.0.0');
+-- QUERY END:

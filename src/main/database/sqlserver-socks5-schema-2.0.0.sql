@@ -245,3 +245,7 @@ end
 -- QUERY END:
 GO
 
+-- QUERY START:
+exec TigSetComponentVersion('socks5', '2.0.0');
+-- QUERY END:
+GO

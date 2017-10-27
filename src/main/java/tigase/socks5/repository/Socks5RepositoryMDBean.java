@@ -32,7 +32,7 @@ import tigase.osgi.ModulesManagerImpl;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
 import tigase.socks5.Socks5ProxyComponent;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

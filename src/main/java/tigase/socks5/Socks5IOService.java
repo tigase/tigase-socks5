@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import tigase.net.IOService;
 import tigase.net.SocketThread;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.JID;
 
 /**
  * 

@@ -5,7 +5,7 @@ import tigase.db.DataSourceAware;
 import tigase.db.TigaseDBException;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 /**
  *

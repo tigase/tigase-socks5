@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
+
+import tigase.xmpp.jid.JID;
 
 
 public class Stream {

@@ -34,7 +34,7 @@ import tigase.db.*;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
-import tigase.xmpp.BareJID;
+import tigase.xmpp.jid.BareJID;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

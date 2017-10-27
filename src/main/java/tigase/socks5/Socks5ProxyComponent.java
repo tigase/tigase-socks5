@@ -44,12 +44,12 @@ import tigase.server.Packet;
 import tigase.server.Priority;
 import tigase.socks5.repository.Socks5Repository;
 import tigase.util.Algorithms;
-import tigase.util.DNSEntry;
-import tigase.util.DNSResolverFactory;
-import tigase.util.TigaseStringprepException;
+import tigase.util.dns.DNSEntry;
+import tigase.util.dns.DNSResolverFactory;
+import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.JID;
 import tigase.xmpp.PacketErrorTypeException;
 import tigase.xmpp.StanzaType;
 

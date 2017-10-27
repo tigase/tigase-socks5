@@ -9,8 +9,8 @@ import tigase.kernel.beans.Inject;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.socks5.*;
 import tigase.socks5.repository.Socks5Repository;
-import tigase.xmpp.BareJID;
-import tigase.xmpp.JID;
+import tigase.xmpp.jid.BareJID;
+import tigase.xmpp.jid.JID;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

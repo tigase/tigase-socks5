@@ -25,17 +25,17 @@
 package tigase.socks5;
 
 /**
- *
  * @author andrzej
  */
-public class Socks5Exception extends Exception {
+public class Socks5Exception
+		extends Exception {
 
-        public Socks5Exception(String message) {
-                super(message);
-        }
+	public Socks5Exception(String message) {
+		super(message);
+	}
 
-        public Socks5Exception(String message, Throwable cause) {
-                super(message, cause);
-        }
- 
+	public Socks5Exception(String message, Throwable cause) {
+		super(message, cause);
+	}
+
 }

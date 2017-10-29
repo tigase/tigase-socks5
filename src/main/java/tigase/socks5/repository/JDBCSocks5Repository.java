@@ -28,7 +28,10 @@ package tigase.socks5.repository;
 
 //~--- non-JDK imports --------------------------------------------------------
 
-import tigase.db.*;
+import tigase.db.DataRepository;
+import tigase.db.Repository;
+import tigase.db.TigaseDBException;
+import tigase.db.UserExistsException;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
@@ -45,69 +48,58 @@ import java.util.logging.Logger;
 //~--- JDK imports ------------------------------------------------------------
 
 /**
- *
  * @author andrzej
  */
 @Repository.Meta(supportedUris = {"jdbc:.*"})
 @Repository.SchemaId(id = Schema.SOCKS5_SCHEMA_ID, name = Schema.SOCKS5_SCHEMA_NAME)
 public class JDBCSocks5Repository
-				implements Socks5Repository<DataRepository> {
-	private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY =
-			"{ call TigSocks5CreateTransferUsed(?, ?, ?) }";
+		implements Socks5Repository<DataRepository> {
+
+	private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY = "{ call TigSocks5CreateTransferUsed(?, ?, ?) }";
 	private static final String DEF_CREATE_UID_QUERY = "{ call TigSocks5CreateUid(?, ?) }";
 	private static final String DEF_GET_UID_QUERY = "{ call TigSocks5GetUid(?) }";
-	private static final String DEF_GLOBAL_SETTINGS            = "socks5-global";
-	private static final String DEF_TRANSFER_LIMITS_DOMAIN_QUERY =
-			"{ call TigSocks5GetTransferLimits(?) }";
-	private static final String DEF_TRANSFER_LIMITS_GENERAL_QUERY =
-			"{ call TigSocks5GetTransferLimits(?) }";
-	private static final String DEF_TRANSFER_LIMITS_USER_QUERY =
-			"{ call TigSocks5GetTransferLimits(?) }";
-	private static final String DEF_TRANSFER_USED_DOMAIN_QUERY =
-			"{ call TigSocks5TransferUsedDomain(?) }";
-	private static final String DEF_TRANSFER_USED_GENERAL_QUERY =
-			"{ call TigSocks5TransferUsedGeneral() }";
-	private static final String DEF_TRANSFER_USED_INSTANCE_QUERY =
-			"{ call TigSocks5TransferUsedInstance(?) }";
-	private static final String DEF_TRANSFER_USED_USER_QUERY =
-			"{ call TigSocks5TransferUsedUser(?) }";
-	private static final String DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY =
-			"{ call TigSocks5UpdateTransferUsed(?, ?) }";
-	private static final Logger log = Logger.getLogger(Socks5Repository.class
-			.getCanonicalName());
+	private static final String DEF_GLOBAL_SETTINGS = "socks5-global";
+	private static final String DEF_TRANSFER_LIMITS_DOMAIN_QUERY = "{ call TigSocks5GetTransferLimits(?) }";
+	private static final String DEF_TRANSFER_LIMITS_GENERAL_QUERY = "{ call TigSocks5GetTransferLimits(?) }";
+	private static final String DEF_TRANSFER_LIMITS_USER_QUERY = "{ call TigSocks5GetTransferLimits(?) }";
+	private static final String DEF_TRANSFER_USED_DOMAIN_QUERY = "{ call TigSocks5TransferUsedDomain(?) }";
+	private static final String DEF_TRANSFER_USED_GENERAL_QUERY = "{ call TigSocks5TransferUsedGeneral() }";
+	private static final String DEF_TRANSFER_USED_INSTANCE_QUERY = "{ call TigSocks5TransferUsedInstance(?) }";
+	private static final String DEF_TRANSFER_USED_USER_QUERY = "{ call TigSocks5TransferUsedUser(?) }";
+	private static final String DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY = "{ call TigSocks5UpdateTransferUsed(?, ?) }";
+	private static final Logger log = Logger.getLogger(Socks5Repository.class.getCanonicalName());
 
 	//~--- fields ---------------------------------------------------------------
 
 	/** Field description */
 	protected DataRepository data_repo;
 	@ConfigField(desc = "Query to create an entry for data transferred over connection", alias = "create-transfer-used-by-connection")
-	private String           createTransferUsedByConnection_query = DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY;
+	private String createTransferUsedByConnection_query = DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY;
 	@ConfigField(desc = "Query to create UID", alias = "create-uid")
-	private String           createUid_query                      = DEF_CREATE_UID_QUERY;
+	private String createUid_query = DEF_CREATE_UID_QUERY;
 	@ConfigField(desc = "Query to retrieve UID", alias = "get-uid")
-	private String           getUid_query                         = DEF_GET_UID_QUERY;
+	private String getUid_query = DEF_GET_UID_QUERY;
 	@ConfigField(desc = "Query to get file transfer limit for domain", alias = "file-size-limit-domain")
-	private String           transferLimitsDomain_query           = DEF_TRANSFER_LIMITS_DOMAIN_QUERY;
-	@ConfigField(desc = "Query to get file transfer limit", alias = "file-size-limit-general" )
-	private String           transferLimitsGeneral_query          = DEF_TRANSFER_LIMITS_GENERAL_QUERY;
+	private String transferLimitsDomain_query = DEF_TRANSFER_LIMITS_DOMAIN_QUERY;
+	@ConfigField(desc = "Query to get file transfer limit", alias = "file-size-limit-general")
+	private String transferLimitsGeneral_query = DEF_TRANSFER_LIMITS_GENERAL_QUERY;
 	@ConfigField(desc = "Query to get file transfer limit for user", alias = "file-size-limit-user")
-	private String           transferLimitsUser_query             = DEF_TRANSFER_LIMITS_USER_QUERY;
+	private String transferLimitsUser_query = DEF_TRANSFER_LIMITS_USER_QUERY;
 	@ConfigField(desc = "Query to get transfer used by users of a domain", alias = "transfer-used-domain")
-	private String           transferUsedDomain_query             = DEF_TRANSFER_USED_DOMAIN_QUERY;
+	private String transferUsedDomain_query = DEF_TRANSFER_USED_DOMAIN_QUERY;
 	@ConfigField(desc = "Query to get transfer used", alias = "transfer-used-general")
-	private String           transferUsedGeneral_query            = DEF_TRANSFER_USED_GENERAL_QUERY;
+	private String transferUsedGeneral_query = DEF_TRANSFER_USED_GENERAL_QUERY;
 	@ConfigField(desc = "Query to get transfer used by cluster node", alias = "transfer-used-instance")
-	private String           transferUsedInstance_query           = DEF_TRANSFER_USED_INSTANCE_QUERY;
+	private String transferUsedInstance_query = DEF_TRANSFER_USED_INSTANCE_QUERY;
 	@ConfigField(desc = "Query to get transfer used by particular user", alias = "transfer-used-user")
-	private String           transferUsedUser_query               = DEF_TRANSFER_USED_USER_QUERY;
+	private String transferUsedUser_query = DEF_TRANSFER_USED_USER_QUERY;
 	@ConfigField(desc = "Query to update transfer used by a single connection", alias = "update-transfer-used-by-connection")
-	private String           updateTransferUsedByConnection_query = DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY;
+	private String updateTransferUsedByConnection_query = DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY;
 
 	//~--- methods --------------------------------------------------------------
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param user
 	 * @param type
@@ -118,23 +110,20 @@ public class JDBCSocks5Repository
 	 * @throws TigaseDBException
 	 */
 	@Override
-	public long createTransferUsedByConnection(BareJID user, Socks5ConnectionType type,
-			BareJID instance)
-					throws TigaseDBException {
-		long      connectionId = 0;
-		long      uid          = getUID(user);
+	public long createTransferUsedByConnection(BareJID user, Socks5ConnectionType type, BareJID instance)
+			throws TigaseDBException {
+		long connectionId = 0;
+		long uid = getUID(user);
 
 		try {
-			ResultSet rs           = null;
-			PreparedStatement createTransferUsedByConnection = data_repo.getPreparedStatement(
-					user, createTransferUsedByConnection_query);
+			ResultSet rs = null;
+			PreparedStatement createTransferUsedByConnection = data_repo.getPreparedStatement(user,
+																							  createTransferUsedByConnection_query);
 
 			synchronized (createTransferUsedByConnection) {
 				try {
 					createTransferUsedByConnection.setLong(1, uid);
-					createTransferUsedByConnection.setInt(2, (type == Socks5ConnectionType.Requester)
-							? 0
-							: 1);
+					createTransferUsedByConnection.setInt(2, (type == Socks5ConnectionType.Requester) ? 0 : 1);
 					createTransferUsedByConnection.setString(3, instance.toString());
 					switch (data_repo.getDatabaseType()) {
 						case jtds:
@@ -154,8 +143,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -194,10 +182,10 @@ public class JDBCSocks5Repository
 	 */
 	@Override
 	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes)
-					throws TigaseDBException {
+			throws TigaseDBException {
 		try {
-			PreparedStatement updateTransferUsedByConnection = data_repo.getPreparedStatement(
-					user_id, updateTransferUsedByConnection_query);
+			PreparedStatement updateTransferUsedByConnection = data_repo.getPreparedStatement(user_id,
+																							  updateTransferUsedByConnection_query);
 
 			synchronized (updateTransferUsedByConnection) {
 				updateTransferUsedByConnection.setLong(1, stream_id);
@@ -205,8 +193,7 @@ public class JDBCSocks5Repository
 				updateTransferUsedByConnection.executeUpdate();
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -216,7 +203,6 @@ public class JDBCSocks5Repository
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return
 	 *
@@ -228,8 +214,7 @@ public class JDBCSocks5Repository
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferLimitsGeneral = data_repo.getPreparedStatement(null,
-					transferLimitsGeneral_query);
+			PreparedStatement transferLimitsGeneral = data_repo.getPreparedStatement(null, transferLimitsGeneral_query);
 
 			synchronized (transferLimitsGeneral) {
 				try {
@@ -245,8 +230,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -256,7 +240,6 @@ public class JDBCSocks5Repository
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param domain
 	 *
@@ -270,8 +253,7 @@ public class JDBCSocks5Repository
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferLimitsDomain = data_repo.getPreparedStatement(null,
-					transferLimitsDomain_query);
+			PreparedStatement transferLimitsDomain = data_repo.getPreparedStatement(null, transferLimitsDomain_query);
 
 			synchronized (transferLimitsDomain) {
 				try {
@@ -287,8 +269,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -298,7 +279,6 @@ public class JDBCSocks5Repository
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param user
 	 *
@@ -312,8 +292,7 @@ public class JDBCSocks5Repository
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferLimitsUser = data_repo.getPreparedStatement(user,
-					transferLimitsUser_query);
+			PreparedStatement transferLimitsUser = data_repo.getPreparedStatement(user, transferLimitsUser_query);
 
 			synchronized (transferLimitsUser) {
 				try {
@@ -329,8 +308,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 
@@ -342,19 +320,17 @@ public class JDBCSocks5Repository
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return
 	 *
 	 * @throws TigaseDBException
 	 */
 	@Override
 	public long getTransferUsed() throws TigaseDBException {
-		long      transferUsed = 0;
+		long transferUsed = 0;
 
 		try {
-			ResultSet rs           = null;
-			PreparedStatement transferUsedGeneral = data_repo.getPreparedStatement(null,
-					transferUsedGeneral_query);
+			ResultSet rs = null;
+			PreparedStatement transferUsedGeneral = data_repo.getPreparedStatement(null, transferUsedGeneral_query);
 
 			synchronized (transferUsedGeneral) {
 				try {
@@ -367,8 +343,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 
@@ -379,7 +354,6 @@ public class JDBCSocks5Repository
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param domain
 	 *
@@ -393,8 +367,7 @@ public class JDBCSocks5Repository
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferUsedDomain = data_repo.getPreparedStatement(null,
-					transferUsedDomain_query);
+			PreparedStatement transferUsedDomain = data_repo.getPreparedStatement(null, transferUsedDomain_query);
 
 			synchronized (transferUsedDomain) {
 				try {
@@ -408,8 +381,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -419,7 +391,6 @@ public class JDBCSocks5Repository
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param instance
 	 *
@@ -433,8 +404,7 @@ public class JDBCSocks5Repository
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferUsedInstance = data_repo.getPreparedStatement(null,
-					transferUsedInstance_query);
+			PreparedStatement transferUsedInstance = data_repo.getPreparedStatement(null, transferUsedInstance_query);
 
 			synchronized (transferUsedInstance) {
 				try {
@@ -448,8 +418,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -460,7 +429,6 @@ public class JDBCSocks5Repository
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param user
 	 *
 	 * @return
@@ -469,13 +437,12 @@ public class JDBCSocks5Repository
 	 */
 	@Override
 	public long getTransferUsedByUser(BareJID user) throws TigaseDBException {
-		long      transferUsed = 0;
-		long      uid          = getUID(user);
+		long transferUsed = 0;
+		long uid = getUID(user);
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement transferUsedUser = data_repo.getPreparedStatement(user,
-					transferUsedUser_query);
+			PreparedStatement transferUsedUser = data_repo.getPreparedStatement(user, transferUsedUser_query);
 
 			synchronized (transferUsedUser) {
 				try {
@@ -489,8 +456,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 
@@ -506,12 +472,11 @@ public class JDBCSocks5Repository
 			return 0;
 		}
 
-		long      uid = 0;
+		long uid = 0;
 
 		try {
 			ResultSet rs = null;
-			PreparedStatement create_uid = data_repo.getPreparedStatement(user,
-					createUid_query);
+			PreparedStatement create_uid = data_repo.getPreparedStatement(user, createUid_query);
 
 			synchronized (create_uid) {
 				try {
@@ -535,8 +500,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -546,8 +510,7 @@ public class JDBCSocks5Repository
 
 	//~--- get methods ----------------------------------------------------------
 
-	private String getParamWithDef(Map<String, String> params, String key,
-			String defValue) {
+	private String getParamWithDef(Map<String, String> params, String key, String defValue) {
 		if (params == null) {
 			return defValue;
 		}
@@ -555,13 +518,9 @@ public class JDBCSocks5Repository
 		String result = params.get(key);
 
 		if (result != null) {
-			log.log(Level.CONFIG, "Custom query loaded for ''{0}'': ''{1}''", new Object[] {
-					key,
-					result });
+			log.log(Level.CONFIG, "Custom query loaded for ''{0}'': ''{1}''", new Object[]{key, result});
 		} else {
-			log.log(Level.CONFIG, "Default query loaded for ''{0}'': ''{1}''", new Object[] {
-					key,
-					defValue });
+			log.log(Level.CONFIG, "Default query loaded for ''{0}'': ''{1}''", new Object[]{key, defValue});
 		}
 		if (result != null) {
 			result.trim();
@@ -570,9 +529,7 @@ public class JDBCSocks5Repository
 			}
 		}
 
-		return (result != null)
-				? result
-				: defValue;
+		return (result != null) ? result : defValue;
 	}
 
 	private long getUID(BareJID user) throws TigaseDBException {
@@ -580,7 +537,7 @@ public class JDBCSocks5Repository
 			return 0;
 		}
 
-		long      uid = 0;
+		long uid = 0;
 
 		try {
 			ResultSet rs = null;
@@ -600,8 +557,7 @@ public class JDBCSocks5Repository
 				}
 			}
 		} catch (SQLIntegrityConstraintViolationException e) {
-			throw new UserExistsException(
-					"Error while adding user to repository, user exists?", e);
+			throw new UserExistsException("Error while adding user to repository, user exists?", e);
 		} catch (SQLException e) {
 			throw new TigaseDBException("Problem accessing repository.", e);
 		}
@@ -609,6 +565,5 @@ public class JDBCSocks5Repository
 		return uid;
 	}
 }
-
 
 //~ Formatted in Tigase Code Convention on 13/04/14

@@ -20,37 +20,36 @@
 package tigase.socks5;
 
 /**
- *
  * @author andrzej
  */
 public class Limits {
 
-        private long transferLimitPerFile = 0;
-        private long transferLimitPerUser = 0;
-        private long transferLimitPerDomain = 0;
+	private long transferLimitPerDomain = 0;
+	private long transferLimitPerFile = 0;
+	private long transferLimitPerUser = 0;
 
-        public long getTransferLimitPerFile() {
-                return transferLimitPerFile;
-        }
+	public long getTransferLimitPerFile() {
+		return transferLimitPerFile;
+	}
 
-        public void setTransferLimitPerFile(long filesizeLimit) {
-                this.transferLimitPerFile = filesizeLimit;
-        }
+	public void setTransferLimitPerFile(long filesizeLimit) {
+		this.transferLimitPerFile = filesizeLimit;
+	}
 
-        public long getTransferLimitPerUser() {
-                return transferLimitPerUser;
-        }
+	public long getTransferLimitPerUser() {
+		return transferLimitPerUser;
+	}
 
-        public void setTransferLimitPerUser(long transferLimit) {
-                this.transferLimitPerUser = transferLimit;
-        }
-        
-        public long getTransferLimitPerDomain() {
-                return transferLimitPerDomain;
-        }
+	public void setTransferLimitPerUser(long transferLimit) {
+		this.transferLimitPerUser = transferLimit;
+	}
 
-        public void setTransferLimitPerDomain(long transferLimit) {
-                this.transferLimitPerDomain = transferLimit;
-        }
-        
+	public long getTransferLimitPerDomain() {
+		return transferLimitPerDomain;
+	}
+
+	public void setTransferLimitPerDomain(long transferLimit) {
+		this.transferLimitPerDomain = transferLimit;
+	}
+
 }

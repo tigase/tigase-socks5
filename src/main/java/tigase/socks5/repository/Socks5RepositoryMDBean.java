@@ -106,7 +106,8 @@ public class Socks5RepositoryMDBean
 	}
 
 	@Override
-	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes) throws TigaseDBException {
+	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes)
+			throws TigaseDBException {
 		getRepository(user_id.getDomain()).updateTransferUsedByConnection(user_id, stream_id, transferred_bytes);
 	}
 

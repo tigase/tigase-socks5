@@ -27,11 +27,10 @@ package tigase.socks5;
 import tigase.net.IOService;
 
 /**
- *
  * @author andrzej
  */
 public interface ServiceChecker<IO extends IOService<?>> {
-        
-        void check(IO service);
-        
+
+	void check(IO service);
+
 }

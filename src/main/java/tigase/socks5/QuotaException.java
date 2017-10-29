@@ -25,17 +25,17 @@
 package tigase.socks5;
 
 /**
- *
  * @author andrzej
  */
-public class QuotaException extends Socks5Exception {
+public class QuotaException
+		extends Socks5Exception {
 
-        public QuotaException(String message) {
-                super(message);
-        }
+	public QuotaException(String message) {
+		super(message);
+	}
 
-        public QuotaException(String message, Throwable cause) {
-                super(message, cause);
-        }
+	public QuotaException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
 }

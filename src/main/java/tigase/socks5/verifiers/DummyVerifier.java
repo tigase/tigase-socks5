@@ -31,19 +31,19 @@ import tigase.socks5.Stream;
 import tigase.socks5.VerifierIfc;
 
 /**
- *
  * @author andrzej
  */
 @Bean(name = "verifier", parent = Socks5ProxyComponent.class, active = true)
-public class DummyVerifier implements VerifierIfc {
+public class DummyVerifier
+		implements VerifierIfc {
 
-        @Override
-        public boolean isAllowed(Stream stream) {
-                return true;
-        }
+	@Override
+	public boolean isAllowed(Stream stream) {
+		return true;
+	}
 
-        @Override
-        public void updateTransfer(Socks5IOService service, boolean force) {
-        }
-        
+	@Override
+	public void updateTransfer(Socks5IOService service, boolean force) {
+	}
+
 }

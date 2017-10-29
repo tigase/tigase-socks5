@@ -26,13 +26,13 @@ import tigase.socks5.Socks5ConnectionType;
 import tigase.xmpp.jid.BareJID;
 
 /**
- *
  * @author andrzej
  */
-public class DummySocks5Repository implements Socks5Repository {
+public class DummySocks5Repository
+		implements Socks5Repository {
 
 	private final Limits limits = new Limits();
-	
+
 	@Override
 	public void setDataSource(DataSource dataSource) {
 	}
@@ -73,12 +73,14 @@ public class DummySocks5Repository implements Socks5Repository {
 	}
 
 	@Override
-	public long createTransferUsedByConnection(BareJID user_id, Socks5ConnectionType type, BareJID instance) throws TigaseDBException {
+	public long createTransferUsedByConnection(BareJID user_id, Socks5ConnectionType type, BareJID instance)
+			throws TigaseDBException {
 		return 0;
 	}
 
 	@Override
-	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes) throws TigaseDBException {
+	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes)
+			throws TigaseDBException {
 	}
-	
+
 }

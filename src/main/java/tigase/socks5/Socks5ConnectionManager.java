@@ -18,50 +18,43 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 
-
-
 package tigase.socks5;
 
 //~--- non-JDK imports --------------------------------------------------------
 
 import tigase.stats.StatisticsList;
 
-//~--- JDK imports ------------------------------------------------------------
-
 import java.io.IOException;
-
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.TimerTask;
+
+//~--- JDK imports ------------------------------------------------------------
 
 /**
  * Class description
  *
- *
- * @version        5.2.0, 13/10/15
- * @author         <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
+ * @author <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
+ * @version 5.2.0, 13/10/15
  */
 public abstract class Socks5ConnectionManager
-				extends AbstractConnectionManager<Socks5IOService<?>> {
-	private static final Logger log = Logger.getLogger(Socks5ConnectionManager.class
-			.getCanonicalName());
+		extends AbstractConnectionManager<Socks5IOService<?>> {
+
+	private static final Logger log = Logger.getLogger(Socks5ConnectionManager.class.getCanonicalName());
 	private static final long STREAM_CREATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
 	//~--- fields ---------------------------------------------------------------
-
-	private ConcurrentHashMap<String, Stream> streams = new ConcurrentHashMap<String,
-			Stream>();
-	private AtomicLong servicesCompleted = new AtomicLong(0);
 	private AtomicLong kbytesTransferred = new AtomicLong(0);
+	private AtomicLong servicesCompleted = new AtomicLong(0);
+	private ConcurrentHashMap<String, Stream> streams = new ConcurrentHashMap<String, Stream>();
 
 	//~--- methods --------------------------------------------------------------
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param service is a <code>Socks5IOService</code>
 	 *
@@ -88,16 +81,14 @@ public abstract class Socks5ConnectionManager
 			streams.put(sid, stream);
 		}
 		if (log.isLoggable(Level.FINER)) {
-			log.log(Level.FINER, "registered connection = {0} for stream = {1}", new Object[] {
-					con.toString(),
-					stream.toString() });
+			log.log(Level.FINER, "registered connection = {0} for stream = {1}",
+					new Object[]{con.toString(), stream.toString()});
 		}
 		stream.addConnection(con);
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param serv is a <code>Socks5IOService<?></code>
 	 */
@@ -110,7 +101,6 @@ public abstract class Socks5ConnectionManager
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param serv is a <code>Socks5IOService<?></code>
 	 *
@@ -129,14 +119,13 @@ public abstract class Socks5ConnectionManager
 	/**
 	 * Process stream after each time data from socket is processed
 	 *
-	 *
 	 * @param service is a <code>Socks5IOService</code>
 	 */
-	public void socketDataProcessed(Socks5IOService service) {}
+	public void socketDataProcessed(Socks5IOService service) {
+	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param service is a <code>Socks5IOService</code>
 	 */
@@ -155,8 +144,7 @@ public abstract class Socks5ConnectionManager
 	public void unregisterStream(Stream stream) {
 		streams.remove(stream.getSID());
 		if (log.isLoggable(Level.FINER)) {
-			log.log(Level.FINER, "unregistered connections for stream = {0}", new Object[] {
-					stream.toString() });
+			log.log(Level.FINER, "unregistered connections for stream = {0}", new Object[]{stream.toString()});
 		}
 	}
 
@@ -165,8 +153,7 @@ public abstract class Socks5ConnectionManager
 	/**
 	 * Generates the component statistics.
 	 *
-	 * @param list
-	 *          is a collection to put the component statistics in.
+	 * @param list is a collection to put the component statistics in.
 	 */
 	@Override
 	public void getStatistics(StatisticsList list) {
@@ -181,14 +168,14 @@ public abstract class Socks5ConnectionManager
 		if (servicesCompleted == 0) {
 			servicesCompleted = 1;
 		}
-		list.add(getName(), "Average transfer size in KB", kbytesTransferred /
-				servicesCompleted, Level.INFO);
+		list.add(getName(), "Average transfer size in KB", kbytesTransferred / servicesCompleted, Level.INFO);
 	}
 
 	/**
 	 * Get stream with specified id from map of registred streams
 	 *
 	 * @param cid
+	 *
 	 * @return
 	 */
 	public Stream getStream(String cid) {
@@ -199,6 +186,7 @@ public abstract class Socks5ConnectionManager
 	 * Check if there is registered stream with specified id
 	 *
 	 * @param cid
+	 *
 	 * @return
 	 */
 	public boolean hasStream(String cid) {
@@ -207,7 +195,6 @@ public abstract class Socks5ConnectionManager
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @return a value of <code>Socks5IOService</code>
 	 *
@@ -221,7 +208,6 @@ public abstract class Socks5ConnectionManager
 	/**
 	 * Method description
 	 *
-	 *
 	 * @return a value of <code>boolean</code>
 	 */
 	@Override
@@ -232,18 +218,17 @@ public abstract class Socks5ConnectionManager
 	//~--- inner classes --------------------------------------------------------
 
 	/**
-	 * Timer task used to close connection if it is not activated within
-	 * specified time period
+	 * Timer task used to close connection if it is not activated within specified time period
 	 */
 	private class AuthenticationTimer
-					extends TimerTask {
+			extends TimerTask {
+
 		private final String connId;
 
 		//~--- constructors -------------------------------------------------------
 
 		/**
 		 * Constructs ...
-		 *
 		 *
 		 * @param connId
 		 */
@@ -255,7 +240,6 @@ public abstract class Socks5ConnectionManager
 
 		/**
 		 * Method description
-		 *
 		 */
 		@Override
 		public void run() {
@@ -267,9 +251,8 @@ public abstract class Socks5ConnectionManager
 			try {
 				if (serv.getState() != Socks5IOService.State.Active) {
 					if (log.isLoggable(Level.FINER)) {
-						log.log(Level.FINER,
-								"closing Socks5 connection not in active state with id  = {0}", serv
-								.getUniqueId());
+						log.log(Level.FINER, "closing Socks5 connection not in active state with id  = {0}",
+								serv.getUniqueId());
 					}
 					services.remove(serv.getUniqueId());
 					if (serv.isConnected()) {
@@ -277,12 +260,11 @@ public abstract class Socks5ConnectionManager
 					}
 				}
 			} catch (Exception ex) {
-				log.log(Level.FINE, "exception while checking for if service " + serv
-						.getUniqueId() + " timed out before activation", ex);
+				log.log(Level.FINE, "exception while checking for if service " + serv.getUniqueId() +
+						" timed out before activation", ex);
 			}
 		}
 	}
 }
-
 
 //~ Formatted in Tigase Code Convention on 13/10/15

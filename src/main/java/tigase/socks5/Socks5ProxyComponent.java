@@ -18,8 +18,6 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 
-
-
 package tigase.socks5;
 
 //~--- non-JDK imports --------------------------------------------------------
@@ -47,9 +45,9 @@ import tigase.util.dns.DNSResolverFactory;
 import tigase.util.stringprep.TigaseStringprepException;
 import tigase.xml.Element;
 import tigase.xmpp.Authorization;
-import tigase.xmpp.jid.JID;
 import tigase.xmpp.PacketErrorTypeException;
 import tigase.xmpp.StanzaType;
+import tigase.xmpp.jid.JID;
 
 import java.net.UnknownHostException;
 import java.security.MessageDigest;
@@ -61,34 +59,31 @@ import java.util.logging.Logger;
 /**
  * Class description
  *
- *
- * @version        Enter version here..., 13/02/16
- * @author         <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
+ * @author <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
+ * @version Enter version here..., 13/02/16
  */
 @Bean(name = "socks5", parent = Kernel.class, active = false)
 @ConfigType(ConfigTypeEnum.DefaultMode)
 public class Socks5ProxyComponent
-				extends Socks5ConnectionManager
-				implements ClusteredComponentIfc, Initializable {
-	private static final String[] IQ_QUERY_ACTIVATE_PATH = { "iq", "query", "activate" };
-	private static final Logger   log = Logger.getLogger(Socks5ProxyComponent.class
-			.getCanonicalName());
-	private static final String   PACKET_FORWARD_CMD          = "socks5-packet-forward";
-	private static final String[] QUERY_ACTIVATE_PATH         = { "query", "activate" };
-	private static final String XMLNS_BYTESTREAMS =
-			"http://jabber.org/protocol/bytestreams";
+		extends Socks5ConnectionManager
+		implements ClusteredComponentIfc, Initializable {
+
+	private static final String[] IQ_QUERY_ACTIVATE_PATH = {"iq", "query", "activate"};
+	private static final Logger log = Logger.getLogger(Socks5ProxyComponent.class.getCanonicalName());
+	private static final String PACKET_FORWARD_CMD = "socks5-packet-forward";
+	private static final String[] QUERY_ACTIVATE_PATH = {"query", "activate"};
+	private static final String XMLNS_BYTESTREAMS = "http://jabber.org/protocol/bytestreams";
 
 	//~--- fields ---------------------------------------------------------------
-
+	private final List<JID> cluster_nodes = new LinkedList<JID>();
 	private ClusterControllerIfc clusterController = null;
+	private PacketForward packetForwardCmd = new PacketForward();
 	@ConfigField(desc = "Remote IP addresses", alias = "remote-addresses")
-	private String[]             remoteAddresses   = null;
+	private String[] remoteAddresses = null;
 	@Inject
-	private Socks5Repository     socks5_repo       = null;
+	private Socks5Repository socks5_repo = null;
 	@Inject
-	private VerifierIfc          verifier          = null;
-	private PacketForward        packetForwardCmd  = new PacketForward();
-	private final List<JID>      cluster_nodes     = new LinkedList<JID>();
+	private VerifierIfc verifier = null;
 
 	//~--- constructors ---------------------------------------------------------
 
@@ -96,15 +91,14 @@ public class Socks5ProxyComponent
 
 	/**
 	 * Constructs ...
-	 *
 	 */
-	public Socks5ProxyComponent() {}
+	public Socks5ProxyComponent() {
+	}
 
 	//~--- methods --------------------------------------------------------------
 
 	/**
 	 * Method description
-	 *
 	 */
 	@Override
 	public synchronized void everyHour() {
@@ -142,7 +136,6 @@ public class Socks5ProxyComponent
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param packet
 	 */
 	@Override
@@ -150,8 +143,8 @@ public class Socks5ProxyComponent
 		try {
 
 			// forwarding response from other node to client
-			if ((packet.getPacketFrom() != null) && packet.getPacketFrom().getLocalpart()
-					.equals(getName()) && cluster_nodes.contains(packet.getPacketFrom())) {
+			if ((packet.getPacketFrom() != null) && packet.getPacketFrom().getLocalpart().equals(getName()) &&
+					cluster_nodes.contains(packet.getPacketFrom())) {
 				packet.setPacketFrom(getComponentId());
 				packet.setPacketTo(null);
 				addOutPacket(packet);
@@ -172,7 +165,7 @@ public class Socks5ProxyComponent
 
 				if (query.getChild("activate") == null) {
 					try {
-						String jid      = packet.getStanzaTo().getBareJID().toString();
+						String jid = packet.getStanzaTo().getBareJID().toString();
 						String hostname = getComponentId().getDomain();
 
 						// Generate list of streamhosts
@@ -213,7 +206,7 @@ public class Socks5ProxyComponent
 						addOutPacket(packet.okResult(query, 0));
 					} catch (UnknownHostException e) {
 						addOutPacket(packet.errorResult("cancel", null, "internal-server-error",
-								"Address of streamhost not found", false));
+														"Address of streamhost not found", false));
 					}
 				} else {
 					String sid = query.getAttributeStaticStr("sid");
@@ -221,24 +214,21 @@ public class Socks5ProxyComponent
 					if (sid != null) {
 
 						// Generate stream unique id
-						String cid = createConnId(sid, packet.getStanzaFrom().toString(), query
-								.getCDataStaticStr(QUERY_ACTIVATE_PATH));
+						String cid = createConnId(sid, packet.getStanzaFrom().toString(),
+												  query.getCDataStaticStr(QUERY_ACTIVATE_PATH));
 
 						if (cid == null) {
-							addOutPacket(packet.errorResult("cancel", null, "internal-server-error",
-									null, false));
+							addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
 						}
 
 						Stream stream = getStream(cid);
 
 						if (stream != null) {
 							stream.setRequester(packet.getStanzaFrom());
-							stream.setTarget(JID.jidInstance(query.getCDataStaticStr(
-									QUERY_ACTIVATE_PATH)));
+							stream.setTarget(JID.jidInstance(query.getCDataStaticStr(QUERY_ACTIVATE_PATH)));
 							if (!verifier.isAllowed(stream)) {
 								stream.close();
-								addOutPacket(packet.errorResult("cancel", null, "not-allowed", null,
-										false));
+								addOutPacket(packet.errorResult("cancel", null, "not-allowed", null, false));
 
 								return;
 							}
@@ -246,36 +236,31 @@ public class Socks5ProxyComponent
 							// Let's try to activate stream
 							if (!stream.activate()) {
 								stream.close();
-								addOutPacket(packet.errorResult("cancel", null, "internal-server-error",
-										null, false));
+								addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
 
 								return;
 							}
 							addOutPacket(packet.okResult((Element) null, 0));
 						} else if (!sendToNextNode(packet)) {
-							addOutPacket(packet.errorResult("cancel", null, "item-not-found", null,
-									true));
+							addOutPacket(packet.errorResult("cancel", null, "item-not-found", null, true));
 						}
 					} else {
 						addOutPacket(packet.errorResult("cancel", null, "bad-request", null, false));
 					}
 				}
 			} else {
-				addOutPacket(packet.errorResult("cancel", 400, "feature-not-implemented", null,
-						false));
+				addOutPacket(packet.errorResult("cancel", 400, "feature-not-implemented", null, false));
 			}
 		} catch (Exception ex) {
 			if (log.isLoggable(Level.FINE)) {
 				log.log(Level.FINE, "exception while processing packet = " + packet, ex);
 			}
-			addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null,
-					false));
+			addOutPacket(packet.errorResult("cancel", null, "internal-server-error", null, false));
 		}
 	}
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param serv
 	 *
@@ -299,7 +284,6 @@ public class Socks5ProxyComponent
 	/**
 	 * Method description
 	 *
-	 *
 	 * @param service
 	 */
 	@Override
@@ -309,13 +293,12 @@ public class Socks5ProxyComponent
 			super.socketDataProcessed(service);
 		} catch (Socks5Exception ex) {
 			if (log.isLoggable(Level.FINEST)) {
-				log.log(Level.FINEST, "stopping service after exception from verifier: " + ex
-						.getMessage());
+				log.log(Level.FINEST, "stopping service after exception from verifier: " + ex.getMessage());
 			}
 
 			// @todo send error
-			Packet message = Message.getMessage(getComponentId(), service.getJID(), StanzaType
-					.error, ex.getMessage(), null, null, null);
+			Packet message = Message.getMessage(getComponentId(), service.getJID(), StanzaType.error, ex.getMessage(),
+												null, null, null);
 
 			this.addOutPacket(message);
 			service.forceStop();
@@ -368,15 +351,14 @@ public class Socks5ProxyComponent
 	public void initialize() {
 		super.initialize();
 
-		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(),
-								   getDiscoCategory(), getDiscoCategoryType(), false, XMLNS_BYTESTREAMS);
+		updateServiceDiscoveryItem(getName(), null, getDiscoDescription(), getDiscoCategory(), getDiscoCategoryType(),
+								   false, XMLNS_BYTESTREAMS);
 	}
 
 	//~--- set methods ----------------------------------------------------------
 
 	/**
 	 * Method description
-	 *
 	 *
 	 * @param cl_controller
 	 */
@@ -396,18 +378,19 @@ public class Socks5ProxyComponent
 	 * @param visitedNodes
 	 * @param data
 	 * @param packet
+	 *
 	 * @return
+	 *
 	 * @throws TigaseStringprepException
 	 */
-	protected boolean sendToNextNode(JID fromNode, Set<JID> visitedNodes, Map<String,
-			String> data, Packet packet)
-					throws TigaseStringprepException {
-		JID       next_node = null;
-		List<JID> nodes     = cluster_nodes;
+	protected boolean sendToNextNode(JID fromNode, Set<JID> visitedNodes, Map<String, String> data, Packet packet)
+			throws TigaseStringprepException {
+		JID next_node = null;
+		List<JID> nodes = cluster_nodes;
 
 		if (nodes != null) {
 			for (JID node : nodes) {
-				if (!visitedNodes.contains(node) &&!getComponentId().equals(node)) {
+				if (!visitedNodes.contains(node) && !getComponentId().equals(node)) {
 					next_node = node;
 
 					break;
@@ -415,8 +398,8 @@ public class Socks5ProxyComponent
 			}
 		}
 		if (next_node != null) {
-			clusterController.sendToNodes(PACKET_FORWARD_CMD, packet.getElement(), fromNode,
-					visitedNodes, new JID[] { next_node });
+			clusterController.sendToNodes(PACKET_FORWARD_CMD, packet.getElement(), fromNode, visitedNodes,
+										  new JID[]{next_node});
 		}
 
 		return next_node != null;
@@ -426,6 +409,7 @@ public class Socks5ProxyComponent
 	 * Send to next node if there is any available
 	 *
 	 * @param packet
+	 *
 	 * @return
 	 */
 	protected boolean sendToNextNode(Packet packet) {
@@ -436,8 +420,8 @@ public class Socks5ProxyComponent
 				log.log(Level.FINEST, "Cluster node found: {0}", cluster_node);
 			}
 			if (cluster_node != null) {
-				clusterController.sendToNodes(PACKET_FORWARD_CMD, packet.getElement(),
-						getComponentId(), null, cluster_node);
+				clusterController.sendToNodes(PACKET_FORWARD_CMD, packet.getElement(), getComponentId(), null,
+											  cluster_node);
 
 				return true;
 			}
@@ -457,18 +441,19 @@ public class Socks5ProxyComponent
 	 */
 	@Override
 	protected int[] getDefaultPorts() {
-		return new int[] { 1080 };
+		return new int[]{1080};
 	}
 
 	/**
 	 * Returns first node of cluster
 	 *
 	 * @param userJid
+	 *
 	 * @return
 	 */
 	protected JID getFirstClusterNode(JID userJid) {
-		JID       cluster_node = null;
-		List<JID> nodes        = cluster_nodes;
+		JID cluster_node = null;
+		List<JID> nodes = cluster_nodes;
 
 		if (nodes != null) {
 			for (JID node : nodes) {
@@ -491,11 +476,12 @@ public class Socks5ProxyComponent
 	 * @param sid
 	 * @param from
 	 * @param to
+	 *
 	 * @return
 	 */
 	private String createConnId(String sid, String from, String to) {
 		try {
-			String        id = sid + from + to;
+			String id = sid + from + to;
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
 
 			return Algorithms.hexDigest("", id, "SHA-1");
@@ -509,14 +495,13 @@ public class Socks5ProxyComponent
 	//~--- inner classes --------------------------------------------------------
 
 	/**
-	 * Handles forward command used to forward packet
-	 * to another node of cluster
+	 * Handles forward command used to forward packet to another node of cluster
 	 */
 	private class PacketForward
-					extends CommandListenerAbstract {
+			extends CommandListenerAbstract {
+
 		/**
 		 * Constructs ...
-		 *
 		 */
 		public PacketForward() {
 			super(PACKET_FORWARD_CMD, Priority.HIGH);
@@ -527,7 +512,6 @@ public class Socks5ProxyComponent
 		/**
 		 * Method description
 		 *
-		 *
 		 * @param fromNode
 		 * @param visitedNodes
 		 * @param data
@@ -536,9 +520,8 @@ public class Socks5ProxyComponent
 		 * @throws ClusterCommandException
 		 */
 		@Override
-		public void executeCommand(JID fromNode, Set<JID> visitedNodes, Map<String,
-				String> data, Queue<Element> packets)
-				throws ClusterCommandException {
+		public void executeCommand(JID fromNode, Set<JID> visitedNodes, Map<String, String> data,
+								   Queue<Element> packets) throws ClusterCommandException {
 			for (Element el_packet : packets) {
 				try {
 					Packet packet = Packet.packetInstance(el_packet);
@@ -546,25 +529,24 @@ public class Socks5ProxyComponent
 					packet.setPacketFrom(fromNode);
 					packet.setPacketTo(getComponentId());
 
-					String cid = createConnId(el_packet.getAttributeStaticStr(Iq.IQ_QUERY_PATH,
-							"sid"), el_packet.getAttributeStaticStr(Packet.FROM_ATT), el_packet
-							.getCDataStaticStr(IQ_QUERY_ACTIVATE_PATH));
+					String cid = createConnId(el_packet.getAttributeStaticStr(Iq.IQ_QUERY_PATH, "sid"),
+											  el_packet.getAttributeStaticStr(Packet.FROM_ATT),
+											  el_packet.getCDataStaticStr(IQ_QUERY_ACTIVATE_PATH));
 
 					if (cid == null) {
 						addOutPacket(Authorization.INTERNAL_SERVER_ERROR.getResponseMessage(packet,
-								"Could not calculate SID", true));
+																							"Could not calculate SID",
+																							true));
 
 						continue;
 					}
 					if (hasStream(cid)) {
 						processPacket(packet);
 					} else if (!sendToNextNode(fromNode, visitedNodes, data, packet)) {
-						addOutPacket(packet.errorResult("cancel", null, "item-not-found", null,
-								true));
+						addOutPacket(packet.errorResult("cancel", null, "item-not-found", null, true));
 					}
 				} catch (PacketErrorTypeException ex) {
-					Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null,
-							ex);
+					Logger.getLogger(Socks5ProxyComponent.class.getName()).log(Level.SEVERE, null, ex);
 				} catch (TigaseStringprepException ex) {
 					log.log(Level.WARNING, "Addressing error, stringprep failure: {0}", el_packet);
 				}
@@ -572,6 +554,5 @@ public class Socks5ProxyComponent
 		}
 	}
 }
-
 
 //~ Formatted in Tigase Code Convention on 13/10/15

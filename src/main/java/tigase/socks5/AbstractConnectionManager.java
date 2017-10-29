@@ -18,8 +18,6 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 
-
-
 package tigase.socks5;
 
 //~--- non-JDK imports --------------------------------------------------------
@@ -43,15 +41,15 @@ import java.util.logging.Logger;
 /**
  * Class description
  *
- *
  * @param <IO>
  *
- * @version        5.2.0, 13/10/15
- * @author         <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
+ * @author <a href="mailto:andrzej.wojcik@tigase.org">Andrzej Wójcik</a>
+ * @version 5.2.0, 13/10/15
  */
 public abstract class AbstractConnectionManager<IO extends IOService<?>>
-				extends AbstractMessageReceiver
-				implements IOServiceListener<IO>, RegistrarBean {
+		extends AbstractMessageReceiver
+		implements IOServiceListener<IO>, RegistrarBean {
+
 	/** Field description */
 	protected static final int NET_BUFFER_HT_PROP_VAL = 64 * 1024;
 
@@ -65,7 +63,7 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	protected static final String PORT_IFC_PROP_KEY = "ifc";
 
 	/** Field description */
-	protected static final String[] PORT_IFC_PROP_VAL = { "*" };
+	protected static final String[] PORT_IFC_PROP_VAL = {"*"};
 
 	/** Field description */
 	protected static final String PORT_KEY = "port-no";
@@ -78,39 +76,33 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 	/** Field description */
 	protected static final String PROP_KEY = "connections/";
-	private static final Logger   log = Logger.getLogger(AbstractConnectionManager.class
-			.getCanonicalName());
-	private static ConnectionOpenThread connectThread = ConnectionOpenThread.getInstance();
-
 	/** Field description */
 	protected static final String PORTS_PROP_KEY = PROP_KEY + "ports";
+	private static final Logger log = Logger.getLogger(AbstractConnectionManager.class.getCanonicalName());
+	private static ConnectionOpenThread connectThread = ConnectionOpenThread.getInstance();
 
 	//~--- fields ---------------------------------------------------------------
-
-	/** Field description */
-	protected Map<String, IO>               services = new ConcurrentHashMap<String, IO>();
-	private long                            bytesReceived  = 0;
-	private long                            bytesSent      = 0;
-	private long                            socketOverflow = 0;
-	private LinkedList<Map<String, Object>> waitingTasks = new LinkedList<Map<String,
-			Object>>();
-	private Set<ConnectionListenerImpl> pending_open = Collections.synchronizedSet(
-			new HashSet<ConnectionListenerImpl>());;
-	private IOServiceStatisticsGetter ioStatsGetter = new IOServiceStatisticsGetter();
-	private boolean                   initializationCompleted = false;
-
 	/** Field description */
 	@ConfigField(desc = "Size of a network buffer", alias = "net-buffer")
 	protected int net_buffer = NET_BUFFER_ST_PROP_VAL;
-
+	/** Field description */
+	protected Map<String, IO> services = new ConcurrentHashMap<String, IO>();
+	private long bytesReceived = 0;
+	private long bytesSent = 0;
+	private boolean initializationCompleted = false;
+	private IOServiceStatisticsGetter ioStatsGetter = new IOServiceStatisticsGetter();
+	;
+	private Set<ConnectionListenerImpl> pending_open = Collections.synchronizedSet(
+			new HashSet<ConnectionListenerImpl>());
 	@Inject
-	private PortsConfigBean		portsConfigBean = null;
+	private PortsConfigBean portsConfigBean = null;
+	private long socketOverflow = 0;
+	private LinkedList<Map<String, Object>> waitingTasks = new LinkedList<Map<String, Object>>();
 
 	//~--- methods --------------------------------------------------------------
 
 	/**
 	 * Executed every minute to i.e. get statistics
-	 *
 	 */
 	@Override
 	public synchronized void everyMinute() {
@@ -120,7 +112,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 	/**
 	 * Method description
-	 *
 	 */
 	@Override
 	public void initializationCompleted() {
@@ -145,6 +136,7 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	 * Handle service after stopping
 	 *
 	 * @param serv
+	 *
 	 * @return
 	 */
 	@Override
@@ -198,15 +190,14 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 	@Override
 	public void unregister(Kernel kernel) {
-		
+
 	}
 
 	//~--- methods --------------------------------------------------------------
 
 	protected void connectWaitingTasks() {
 		if (log.isLoggable(Level.FINER)) {
-			log.log(Level.FINER, "Connecting waitingTasks: {0}",
-					new Object[]{waitingTasks});
+			log.log(Level.FINER, "Connecting waitingTasks: {0}", new Object[]{waitingTasks});
 		}
 
 		for (Map<String, Object> params : waitingTasks) {
@@ -215,14 +206,12 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 		waitingTasks.clear();
 		portsConfigBean.start();
 	}
-	
+
 	/**
-	 * Perform a given action defined by ServiceChecker for all active IOService
-	 * objects (active network connections).
+	 * Perform a given action defined by ServiceChecker for all active IOService objects (active network connections).
 	 *
-	 * @param checker
-	 *          is a <code>ServiceChecker</code> instance defining an action to
-	 *          perform for all IOService objects.
+	 * @param checker is a <code>ServiceChecker</code> instance defining an action to perform for all IOService
+	 * objects.
 	 */
 	protected void doForAllServices(ServiceChecker<IO> checker) {
 		for (IO service : services.values()) {
@@ -243,6 +232,7 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	 * Returns new instance of service
 	 *
 	 * @return
+	 *
 	 * @throws IOException
 	 */
 	protected abstract IO getIOServiceInstance() throws IOException;
@@ -271,6 +261,11 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 	//~--- methods --------------------------------------------------------------
 
+	protected void releaseListener(ConnectionOpenListener toStop) {
+		pending_open.remove(toStop);
+		connectThread.removeConnectionOpenListener(toStop);
+	}
+
 	/**
 	 * Reconnect service (bind port/connect)
 	 *
@@ -279,13 +274,10 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 	 */
 	private void reconnectService(final Map<String, Object> port_props, long delay) {
 		if (log.isLoggable(Level.FINER)) {
-			String cid = "" + port_props.get("local-hostname") + "@" + port_props.get(
-					"remote-hostname");
+			String cid = "" + port_props.get("local-hostname") + "@" + port_props.get("remote-hostname");
 
-			log.log(Level.FINER,
-					"Reconnecting service for: {0}, scheduling next try in {1}secs, cid: {2}",
-					new Object[] { getName(),
-					delay / 1000, cid });
+			log.log(Level.FINER, "Reconnecting service for: {0}, scheduling next try in {1}secs, cid: {2}",
+					new Object[]{getName(), delay / 1000, cid});
 		}
 		addTimerTask(new TimerTask() {
 			@Override
@@ -294,17 +286,11 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 				if (log.isLoggable(Level.FINE)) {
 					log.log(Level.FINE, "Reconnecting service for component: {0}, on port: {1}",
-							new Object[] { getName(),
-							port });
+							new Object[]{getName(), port});
 				}
 				startService(port_props);
 			}
 		}, delay);
-	}
-
-	protected void releaseListener(ConnectionOpenListener toStop) {
-		pending_open.remove(toStop);
-		connectThread.removeConnectionOpenListener(toStop);
 	}
 
 	/**
@@ -331,216 +317,23 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 		return cli;
 	}
-	
+
 	//~--- inner classes --------------------------------------------------------
 
-	private class ConnectionListenerImpl
-					implements ConnectionOpenListener {
-		private Map<String, Object> port_props = null;
-
-		//~--- constructors -------------------------------------------------------
-
-		/**
-		 * Constructs ...
-		 *
-		 *
-		 * @param port_props
-		 */
-		public ConnectionListenerImpl(Map<String, Object> port_props) {
-			this.port_props = port_props;
-		}
-
-		//~--- methods ------------------------------------------------------------
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @param sc is a <code>SocketChannel</code>
-		 */
-		@Override
-		public void accept(SocketChannel sc) {
-			IO conn = null;
-
-			try {
-				conn = getIOServiceInstance();
-				conn.setIOServiceListener(null);
-				conn.accept(sc);
-				serviceStarted(conn);
-				SocketThread.addSocketService(conn);
-			} catch (IOException ex) {
-				log.log(Level.WARNING, "Can not accept connection.", ex);
-				if (conn != null) {
-
-//        try {
-					conn.stop();
-
-//        conn.close();
-//                                        }
-//                                        catch (IOException ex1) {
-//        Logger.getLogger(AbstractConnectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-//                                        }
-				}
-			}
-		}
-
-		//~--- get methods --------------------------------------------------------
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>ConnectionType</code>
-		 */
-		@Override
-		public ConnectionType getConnectionType() {
-			String type = null;
-
-			if (port_props.get(PORT_TYPE_PROP_KEY) == null) {
-				log.warning(getName() + ": connection type is null: " + port_props.get(PORT_KEY)
-						.toString());
-			} else {
-				type = port_props.get(PORT_TYPE_PROP_KEY).toString();
-			}
-
-			return ConnectionType.valueOf(type);
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>String[]</code>
-		 */
-		@Override
-		public String[] getIfcs() {
-			return (String[]) port_props.get(PORT_IFC_PROP_KEY);
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>int</code>
-		 */
-		@Override
-		public int getPort() {
-			return (Integer) port_props.get(PORT_KEY);
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>int</code>
-		 */
-		@Override
-		public int getReceiveBufferSize() {
-			return net_buffer;
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>InetSocketAddress</code>
-		 */
-		@Override
-		public InetSocketAddress getRemoteAddress() {
-			return (InetSocketAddress) port_props.get("remote-address");
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>String</code>
-		 */
-		@Override
-		public String getRemoteHostname() {
-			return (String) port_props.get("remote-hostname");
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>SocketType</code>
-		 */
-		@Override
-		public SocketType getSocketType() {
-			return SocketType.valueOf(port_props.get(PORT_SOCKET_PROP_KEY).toString());
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>String</code>
-		 */
-		@Override
-		public String getSRVType() {
-			return "_socks5._tcp";
-		}
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @return a value of <code>int</code>
-		 */
-		@Override
-		public int getTrafficClass() {
-			if (isHighThroughput()) {
-				return IPTOS_THROUGHPUT;
-			} else {
-				return DEF_TRAFFIC_CLASS;
-			}
-		}
-	}
-
-
-	/**
-	 * Executed for each service to get statistics from it
-	 */
-	private class IOServiceStatisticsGetter
-					implements ServiceChecker<IO> {
-		private StatisticsList list = new StatisticsList(Level.ALL);
-
-		//~--- methods ------------------------------------------------------------
-
-		/**
-		 * Method description
-		 *
-		 *
-		 * @param service
-		 */
-		@Override
-		public synchronized void check(IO service) {
-			service.getStatistics(list, true);
-			bytesReceived  += list.getValue("socketio", "Bytes received", -1l);
-			bytesSent      += list.getValue("socketio", "Bytes sent", -1l);
-			socketOverflow += list.getValue("socketio", "Buffers overflow", -1l);
-		}
-	}
-
-	public static class PortConfigBean implements ConfigurationChangedAware, Initializable, UnregisterAware {
-
-		@Inject
-		private AbstractConnectionManager connectionManager;
-		private ConnectionOpenListener connectionOpenListener = null;
-
-		@ConfigField(desc = "Port")
-		private Integer name;
-
-		@ConfigField(desc = "Port type")
-		protected ConnectionType type = ConnectionType.accept;
-
-		@ConfigField(desc = "Socket type")
-		protected SocketType socket = SocketType.plain;
+	public static class PortConfigBean
+			implements ConfigurationChangedAware, Initializable, UnregisterAware {
 
 		@ConfigField(desc = "Interface to listen on")
 		protected String[] ifc = null;
+		@ConfigField(desc = "Socket type")
+		protected SocketType socket = SocketType.plain;
+		@ConfigField(desc = "Port type")
+		protected ConnectionType type = ConnectionType.accept;
+		@Inject
+		private AbstractConnectionManager connectionManager;
+		private ConnectionOpenListener connectionOpenListener = null;
+		@ConfigField(desc = "Port")
+		private Integer name;
 
 		public PortConfigBean() {
 
@@ -548,11 +341,13 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 		@Override
 		public void beanConfigurationChanged(Collection<String> changedFields) {
-			if (connectionManager == null || !connectionManager.isInitializationComplete())
+			if (connectionManager == null || !connectionManager.isInitializationComplete()) {
 				return;
+			}
 
-			if (connectionOpenListener != null)
+			if (connectionOpenListener != null) {
 				connectionManager.releaseListener(connectionOpenListener);
+			}
 
 			if (log.isLoggable(Level.FINEST)) {
 				log.log(Level.FINEST, "connectionManager: {0}, changedFields: {1}, props: {2}",
@@ -564,8 +359,14 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 		@Override
 		public void beforeUnregister() {
-			if (connectionOpenListener != null)
+			if (connectionOpenListener != null) {
 				connectionManager.releaseListener(connectionOpenListener);
+			}
+		}
+
+		@Override
+		public void initialize() {
+			beanConfigurationChanged(Collections.emptyList());
 		}
 
 		protected Map<String, Object> getProps() {
@@ -573,32 +374,26 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 			props.put(PORT_KEY, name);
 			props.put(PORT_TYPE_PROP_KEY, type);
 			props.put(PORT_SOCKET_PROP_KEY, socket);
-			if (ifc == null)
+			if (ifc == null) {
 				props.put(PORT_IFC_PROP_KEY, connectionManager.PORT_IFC_PROP_VAL);
-			else
+			} else {
 				props.put(PORT_IFC_PROP_KEY, ifc);
+			}
 			return props;
 		}
-
-		@Override
-		public void initialize() {
-			beanConfigurationChanged(Collections.emptyList());
-		}
 	}
-	
+
 	@Bean(name = "connections", parent = AbstractConnectionManager.class, active = true, exportable = true)
-	public static class PortsConfigBean implements RegistrarBeanWithDefaultBeanClass, Initializable {
+	public static class PortsConfigBean
+			implements RegistrarBeanWithDefaultBeanClass, Initializable {
 
 		@Inject
 		private AbstractConnectionManager connectionManager;
-
-		@Inject(nullAllowed = true)
-		private PortConfigBean[] portsBeans;
-
+		private Kernel kernel;
 		@ConfigField(desc = "Ports to enable", alias = "ports")
 		private HashSet<Integer> ports;
-
-		private Kernel kernel;
+		@Inject(nullAllowed = true)
+		private PortConfigBean[] portsBeans;
 
 		public PortsConfigBean() {
 
@@ -633,12 +428,12 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 				int[] tmp = connectionManager.getDefaultPorts();
 				if (tmp != null) {
 					ports = new HashSet<>();
-					for (int i=0; i<tmp.length; i++) {
+					for (int i = 0; i < tmp.length; i++) {
 						ports.add(tmp[i]);
 					}
 				}
 			}
-			
+
 			for (Integer port : ports) {
 				String name = String.valueOf(port);
 				if (kernel.getDependencyManager().getBeanConfig(name) == null) {
@@ -660,7 +455,184 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 	}
 
-}
+	private class ConnectionListenerImpl
+			implements ConnectionOpenListener {
 
+		private Map<String, Object> port_props = null;
+
+		//~--- constructors -------------------------------------------------------
+
+		/**
+		 * Constructs ...
+		 *
+		 * @param port_props
+		 */
+		public ConnectionListenerImpl(Map<String, Object> port_props) {
+			this.port_props = port_props;
+		}
+
+		//~--- methods ------------------------------------------------------------
+
+		/**
+		 * Method description
+		 *
+		 * @param sc is a <code>SocketChannel</code>
+		 */
+		@Override
+		public void accept(SocketChannel sc) {
+			IO conn = null;
+
+			try {
+				conn = getIOServiceInstance();
+				conn.setIOServiceListener(null);
+				conn.accept(sc);
+				serviceStarted(conn);
+				SocketThread.addSocketService(conn);
+			} catch (IOException ex) {
+				log.log(Level.WARNING, "Can not accept connection.", ex);
+				if (conn != null) {
+
+//        try {
+					conn.stop();
+
+//        conn.close();
+//                                        }
+//                                        catch (IOException ex1) {
+//        Logger.getLogger(AbstractConnectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+//                                        }
+				}
+			}
+		}
+
+		//~--- get methods --------------------------------------------------------
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>ConnectionType</code>
+		 */
+		@Override
+		public ConnectionType getConnectionType() {
+			String type = null;
+
+			if (port_props.get(PORT_TYPE_PROP_KEY) == null) {
+				log.warning(getName() + ": connection type is null: " + port_props.get(PORT_KEY).toString());
+			} else {
+				type = port_props.get(PORT_TYPE_PROP_KEY).toString();
+			}
+
+			return ConnectionType.valueOf(type);
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>String[]</code>
+		 */
+		@Override
+		public String[] getIfcs() {
+			return (String[]) port_props.get(PORT_IFC_PROP_KEY);
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>int</code>
+		 */
+		@Override
+		public int getPort() {
+			return (Integer) port_props.get(PORT_KEY);
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>int</code>
+		 */
+		@Override
+		public int getReceiveBufferSize() {
+			return net_buffer;
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>InetSocketAddress</code>
+		 */
+		@Override
+		public InetSocketAddress getRemoteAddress() {
+			return (InetSocketAddress) port_props.get("remote-address");
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>String</code>
+		 */
+		@Override
+		public String getRemoteHostname() {
+			return (String) port_props.get("remote-hostname");
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>SocketType</code>
+		 */
+		@Override
+		public SocketType getSocketType() {
+			return SocketType.valueOf(port_props.get(PORT_SOCKET_PROP_KEY).toString());
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>String</code>
+		 */
+		@Override
+		public String getSRVType() {
+			return "_socks5._tcp";
+		}
+
+		/**
+		 * Method description
+		 *
+		 * @return a value of <code>int</code>
+		 */
+		@Override
+		public int getTrafficClass() {
+			if (isHighThroughput()) {
+				return IPTOS_THROUGHPUT;
+			} else {
+				return DEF_TRAFFIC_CLASS;
+			}
+		}
+	}
+
+	/**
+	 * Executed for each service to get statistics from it
+	 */
+	private class IOServiceStatisticsGetter
+			implements ServiceChecker<IO> {
+
+		private StatisticsList list = new StatisticsList(Level.ALL);
+
+		//~--- methods ------------------------------------------------------------
+
+		/**
+		 * Method description
+		 *
+		 * @param service
+		 */
+		@Override
+		public synchronized void check(IO service) {
+			service.getStatistics(list, true);
+			bytesReceived += list.getValue("socketio", "Bytes received", -1l);
+			bytesSent += list.getValue("socketio", "Bytes sent", -1l);
+			socketOverflow += list.getValue("socketio", "Buffers overflow", -1l);
+		}
+	}
+
+}
 
 //~ Formatted in Tigase Code Convention on 13/10/15

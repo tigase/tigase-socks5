@@ -25,12 +25,11 @@
 package tigase.socks5;
 
 /**
- *
  * @author andrzej
  */
 public enum Socks5ConnectionType {
-        
-        Requester,
-        Target
-        
+
+	Requester,
+	Target
+
 }

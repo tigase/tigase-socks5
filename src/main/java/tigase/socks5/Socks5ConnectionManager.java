@@ -53,13 +53,6 @@ public abstract class Socks5ConnectionManager
 
 	//~--- methods --------------------------------------------------------------
 
-	/**
-	 * Method description
-	 *
-	 * @param service is a <code>Socks5IOService</code>
-	 *
-	 * @throws IOException
-	 */
 	@Override
 	public void packetsReady(Socks5IOService service) throws IOException {
 
@@ -87,11 +80,6 @@ public abstract class Socks5ConnectionManager
 		stream.addConnection(con);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param serv is a <code>Socks5IOService<?></code>
-	 */
 	@Override
 	public void serviceStarted(Socks5IOService<?> serv) {
 		super.serviceStarted(serv);
@@ -99,13 +87,6 @@ public abstract class Socks5ConnectionManager
 		addTimerTask(new AuthenticationTimer(serv.getUniqueId()), STREAM_CREATION_TIMEOUT);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param serv is a <code>Socks5IOService<?></code>
-	 *
-	 * @return a value of <code>boolean</code>
-	 */
 	@Override
 	public boolean serviceStopped(Socks5IOService<?> serv) {
 		long bytesTransferred = serv.getBytesReceived() + serv.getBytesSent();
@@ -124,11 +105,6 @@ public abstract class Socks5ConnectionManager
 	public void socketDataProcessed(Socks5IOService service) {
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param service is a <code>Socks5IOService</code>
-	 */
 	@Override
 	public void tlsHandshakeCompleted(Socks5IOService service) {
 
@@ -193,23 +169,11 @@ public abstract class Socks5ConnectionManager
 		return streams.contains(cid);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return a value of <code>Socks5IOService</code>
-	 *
-	 * @throws IOException
-	 */
 	@Override
 	protected Socks5IOService getIOServiceInstance() throws IOException {
 		return new Socks5IOService();
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return a value of <code>boolean</code>
-	 */
 	@Override
 	protected boolean isHighThroughput() {
 		return true;
@@ -225,22 +189,10 @@ public abstract class Socks5ConnectionManager
 
 		private final String connId;
 
-		//~--- constructors -------------------------------------------------------
-
-		/**
-		 * Constructs ...
-		 *
-		 * @param connId
-		 */
 		public AuthenticationTimer(String connId) {
 			this.connId = connId;
 		}
 
-		//~--- methods ------------------------------------------------------------
-
-		/**
-		 * Method description
-		 */
 		@Override
 		public void run() {
 			Socks5IOService serv = services.get(connId);

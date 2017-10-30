@@ -85,21 +85,9 @@ public class Socks5ProxyComponent
 	@Inject
 	private VerifierIfc verifier = null;
 
-	//~--- constructors ---------------------------------------------------------
-
-//private Licence lic;
-
-	/**
-	 * Constructs ...
-	 */
 	public Socks5ProxyComponent() {
 	}
 
-	//~--- methods --------------------------------------------------------------
-
-	/**
-	 * Method description
-	 */
 	@Override
 	public synchronized void everyHour() {
 		super.everyHour();
@@ -133,11 +121,6 @@ public class Socks5ProxyComponent
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param packet
-	 */
 	@Override
 	public void processPacket(Packet packet) {
 		try {
@@ -259,13 +242,6 @@ public class Socks5ProxyComponent
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param serv
-	 *
-	 * @return
-	 */
 	@Override
 	public boolean serviceStopped(Socks5IOService<?> serv) {
 		try {
@@ -281,11 +257,6 @@ public class Socks5ProxyComponent
 		return super.serviceStopped(serv);
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param service
-	 */
 	@Override
 	public void socketDataProcessed(Socks5IOService service) {
 		try {
@@ -357,11 +328,6 @@ public class Socks5ProxyComponent
 
 	//~--- set methods ----------------------------------------------------------
 
-	/**
-	 * Method description
-	 *
-	 * @param cl_controller
-	 */
 	@Override
 	public void setClusterController(ClusterControllerIfc cl_controller) {
 		clusterController = cl_controller;
@@ -500,25 +466,10 @@ public class Socks5ProxyComponent
 	private class PacketForward
 			extends CommandListenerAbstract {
 
-		/**
-		 * Constructs ...
-		 */
 		public PacketForward() {
 			super(PACKET_FORWARD_CMD, Priority.HIGH);
 		}
 
-		//~--- methods ------------------------------------------------------------
-
-		/**
-		 * Method description
-		 *
-		 * @param fromNode
-		 * @param visitedNodes
-		 * @param data
-		 * @param packets
-		 *
-		 * @throws ClusterCommandException
-		 */
 		@Override
 		public void executeCommand(JID fromNode, Set<JID> visitedNodes, Map<String, String> data,
 								   Queue<Element> packets) throws ClusterCommandException {

@@ -96,19 +96,6 @@ public class JDBCSocks5Repository
 	@ConfigField(desc = "Query to update transfer used by a single connection", alias = "update-transfer-used-by-connection")
 	private String updateTransferUsedByConnection_query = DEF_UPDATE_TRANSFER_USED_BY_CONNECTION_QUERY;
 
-	//~--- methods --------------------------------------------------------------
-
-	/**
-	 * Method description
-	 *
-	 * @param user
-	 * @param type
-	 * @param instance
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public long createTransferUsedByConnection(BareJID user, Socks5ConnectionType type, BareJID instance)
 			throws TigaseDBException {
@@ -171,15 +158,6 @@ public class JDBCSocks5Repository
 		}
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param user_id
-	 * @param stream_id
-	 * @param transferred_bytes
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public void updateTransferUsedByConnection(BareJID user_id, long stream_id, long transferred_bytes)
 			throws TigaseDBException {
@@ -199,15 +177,6 @@ public class JDBCSocks5Repository
 		}
 	}
 
-	//~--- get methods ----------------------------------------------------------
-
-	/**
-	 * Method description
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public Limits getTransferLimits() throws TigaseDBException {
 		Limits limits = new Limits();
@@ -238,15 +207,6 @@ public class JDBCSocks5Repository
 		return limits;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param domain
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public Limits getTransferLimits(String domain) throws TigaseDBException {
 		Limits limits = new Limits();
@@ -277,15 +237,6 @@ public class JDBCSocks5Repository
 		return limits;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param user
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public Limits getTransferLimits(BareJID user) throws TigaseDBException {
 		Limits limits = new Limits();
@@ -317,13 +268,6 @@ public class JDBCSocks5Repository
 		return limits;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public long getTransferUsed() throws TigaseDBException {
 		long transferUsed = 0;
@@ -352,15 +296,6 @@ public class JDBCSocks5Repository
 		return transferUsed;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param domain
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public long getTransferUsedByDomain(String domain) throws TigaseDBException {
 		long transferUsed = 0;
@@ -389,15 +324,6 @@ public class JDBCSocks5Repository
 		return transferUsed;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param instance
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public long getTransferUsedByInstance(String instance) throws TigaseDBException {
 		long transferUsed = 0;
@@ -426,15 +352,6 @@ public class JDBCSocks5Repository
 		return transferUsed;
 	}
 
-	/**
-	 * Method description
-	 *
-	 * @param user
-	 *
-	 * @return
-	 *
-	 * @throws TigaseDBException
-	 */
 	@Override
 	public long getTransferUsedByUser(BareJID user) throws TigaseDBException {
 		long transferUsed = 0;
@@ -507,8 +424,6 @@ public class JDBCSocks5Repository
 
 		return uid;
 	}
-
-	//~--- get methods ----------------------------------------------------------
 
 	private String getParamWithDef(Map<String, String> params, String key, String defValue) {
 		if (params == null) {

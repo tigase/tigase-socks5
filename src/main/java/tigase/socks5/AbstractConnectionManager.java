@@ -110,9 +110,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 		super.everyMinute();
 	}
 
-	/**
-	 * Method description
-	 */
 	@Override
 	public void initializationCompleted() {
 		initializationCompleted = true;
@@ -460,24 +457,10 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 		private Map<String, Object> port_props = null;
 
-		//~--- constructors -------------------------------------------------------
-
-		/**
-		 * Constructs ...
-		 *
-		 * @param port_props
-		 */
 		public ConnectionListenerImpl(Map<String, Object> port_props) {
 			this.port_props = port_props;
 		}
 
-		//~--- methods ------------------------------------------------------------
-
-		/**
-		 * Method description
-		 *
-		 * @param sc is a <code>SocketChannel</code>
-		 */
 		@Override
 		public void accept(SocketChannel sc) {
 			IO conn = null;
@@ -504,13 +487,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 			}
 		}
 
-		//~--- get methods --------------------------------------------------------
-
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>ConnectionType</code>
-		 */
 		@Override
 		public ConnectionType getConnectionType() {
 			String type = null;
@@ -524,81 +500,41 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 			return ConnectionType.valueOf(type);
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>String[]</code>
-		 */
 		@Override
 		public String[] getIfcs() {
 			return (String[]) port_props.get(PORT_IFC_PROP_KEY);
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>int</code>
-		 */
 		@Override
 		public int getPort() {
 			return (Integer) port_props.get(PORT_KEY);
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>int</code>
-		 */
 		@Override
 		public int getReceiveBufferSize() {
 			return net_buffer;
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>InetSocketAddress</code>
-		 */
 		@Override
 		public InetSocketAddress getRemoteAddress() {
 			return (InetSocketAddress) port_props.get("remote-address");
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>String</code>
-		 */
 		@Override
 		public String getRemoteHostname() {
 			return (String) port_props.get("remote-hostname");
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>SocketType</code>
-		 */
 		@Override
 		public SocketType getSocketType() {
 			return SocketType.valueOf(port_props.get(PORT_SOCKET_PROP_KEY).toString());
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>String</code>
-		 */
 		@Override
 		public String getSRVType() {
 			return "_socks5._tcp";
 		}
 
-		/**
-		 * Method description
-		 *
-		 * @return a value of <code>int</code>
-		 */
 		@Override
 		public int getTrafficClass() {
 			if (isHighThroughput()) {
@@ -619,11 +555,6 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 
 		//~--- methods ------------------------------------------------------------
 
-		/**
-		 * Method description
-		 *
-		 * @param service
-		 */
 		@Override
 		public synchronized void check(IO service) {
 			service.getStatistics(list, true);

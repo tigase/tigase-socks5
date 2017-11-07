@@ -32,6 +32,7 @@ import tigase.db.DataRepository;
 import tigase.db.Repository;
 import tigase.db.TigaseDBException;
 import tigase.db.UserExistsException;
+import tigase.db.util.RepositoryVersionAware;
 import tigase.kernel.beans.config.ConfigField;
 import tigase.socks5.Limits;
 import tigase.socks5.Socks5ConnectionType;
@@ -53,7 +54,7 @@ import java.util.logging.Logger;
 @Repository.Meta(supportedUris = {"jdbc:.*"})
 @Repository.SchemaId(id = Schema.SOCKS5_SCHEMA_ID, name = Schema.SOCKS5_SCHEMA_NAME)
 public class JDBCSocks5Repository
-		implements Socks5Repository<DataRepository> {
+		implements Socks5Repository<DataRepository>, RepositoryVersionAware {
 
 	private static final String DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY = "{ call TigSocks5CreateTransferUsed(?, ?, ?) }";
 	private static final String DEF_CREATE_UID_QUERY = "{ call TigSocks5CreateUid(?, ?) }";
@@ -141,7 +142,6 @@ public class JDBCSocks5Repository
 	@Override
 	public void setDataSource(DataRepository data_repo) {
 		try {
-			data_repo.checkSchemaVersion(this);
 			data_repo.initPreparedStatement(createUid_query, createUid_query);
 			data_repo.initPreparedStatement(getUid_query, getUid_query);
 			data_repo.initPreparedStatement(transferLimitsGeneral_query, transferLimitsGeneral_query);

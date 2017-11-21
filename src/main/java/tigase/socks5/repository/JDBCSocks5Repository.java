@@ -72,7 +72,6 @@ public class JDBCSocks5Repository
 
 	//~--- fields ---------------------------------------------------------------
 
-	/** Field description */
 	protected DataRepository data_repo;
 	@ConfigField(desc = "Query to create an entry for data transferred over connection", alias = "create-transfer-used-by-connection")
 	private String createTransferUsedByConnection_query = DEF_CREATE_TRANSFER_USED_BY_CONNECTION_QUERY;

@@ -50,42 +50,30 @@ public abstract class AbstractConnectionManager<IO extends IOService<?>>
 		extends AbstractMessageReceiver
 		implements IOServiceListener<IO>, RegistrarBean {
 
-	/** Field description */
 	protected static final int NET_BUFFER_HT_PROP_VAL = 64 * 1024;
 
-	/** Field description */
 	protected static final int NET_BUFFER_ST_PROP_VAL = 2 * 1024;
 
-	/** Field description */
 	protected static final String PORT_CLASS_PROP_KEY = "class";
 
-	/** Field description */
 	protected static final String PORT_IFC_PROP_KEY = "ifc";
 
-	/** Field description */
 	protected static final String[] PORT_IFC_PROP_VAL = {"*"};
 
-	/** Field description */
 	protected static final String PORT_KEY = "port-no";
 
-	/** Field description */
 	protected static final String PORT_SOCKET_PROP_KEY = "socket";
 
-	/** Field description */
 	protected static final String PORT_TYPE_PROP_KEY = "type";
 
-	/** Field description */
 	protected static final String PROP_KEY = "connections/";
-	/** Field description */
 	protected static final String PORTS_PROP_KEY = PROP_KEY + "ports";
 	private static final Logger log = Logger.getLogger(AbstractConnectionManager.class.getCanonicalName());
 	private static ConnectionOpenThread connectThread = ConnectionOpenThread.getInstance();
 
 	//~--- fields ---------------------------------------------------------------
-	/** Field description */
 	@ConfigField(desc = "Size of a network buffer", alias = "net-buffer")
 	protected int net_buffer = NET_BUFFER_ST_PROP_VAL;
-	/** Field description */
 	protected Map<String, IO> services = new ConcurrentHashMap<String, IO>();
 	private long bytesReceived = 0;
 	private long bytesSent = 0;

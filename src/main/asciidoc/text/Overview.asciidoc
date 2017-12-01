@@ -1,7 +1,9 @@
+:leveloffset: 2
 [[socks5Overview]]
 = Overview
 :author: Andrzej Wójcik
 :version: v2.0 August 2017. Reformatted for v8.0.0.
+
 
 :toc:
 :numbered:

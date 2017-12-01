@@ -1,3 +1,4 @@
+:leveloffset: 2
 [[socks5Config]]
 = Configuration
 :author: Andrzej Wójcik

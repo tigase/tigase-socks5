@@ -1,4 +1,4 @@
-:leveloffset: 1
+:leveloffset: 2
 [[socks5Comp]]
 = Tigase Socks5 Proxy
 
@@ -11,6 +11,10 @@
 
 Welcome to Tigase Socks5 Proxy guide
 
+Tigase SOCKS5 component allows for file transfers to be made over a SOCKS5 proxy in accordance with link:http://xmpp.org/extensions/xep-0065.html[XEP-0065 SOCKS5 Bytestreams].  This allows for some useful features such as:
+- transfer limits per user, domain, or global
+- recording transfers between users
+- quotas and credits system implementation
 
 
 include::text/Overview.asciidoc[]

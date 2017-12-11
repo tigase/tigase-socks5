@@ -1,4 +1,3 @@
-:leveloffset: 2
 [[socks5Comp]]
 = Tigase Socks5 Proxy
 
@@ -17,9 +16,9 @@ Tigase SOCKS5 component allows for file transfers to be made over a SOCKS5 proxy
 - quotas and credits system implementation
 
 
-include::text/Overview.asciidoc[]
-include::text/Configuration.asciidoc[]
+include::text/Overview.asciidoc[leveloffset=+1]
+include::text/Configuration.asciidoc[leveloffset=+1]
 
-= Performance
+== Performance
 Tigase Socks5 Proxy component was tested with 100 concurrent transfers.
 Maximal traffic processed by component was 21,45MB/s on loopback interface. All XMPP clients and Tigase XMPP Server used in test were running on the single machine.

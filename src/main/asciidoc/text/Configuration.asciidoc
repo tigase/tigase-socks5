@@ -1,4 +1,3 @@
-:leveloffset: 3
 [[socks5Config]]
 = Configuration
 :author: Andrzej Wójcik
@@ -45,19 +44,31 @@ proxy {
 }
 -----
 
-== Enabling limits
+=== Enabling limits
 To enable limits you need to import schema files proper for your database and related to Tigase Socks5 Proxy component from `database` directory.
 To do this, refer to the previous section.
 
 With that setup, it is possible to enable limits verifier by replacing entries related to Tigase Socks5 Proxy component configuration with following entries.
 This will use default database configured to use with Tigase XMPP Server.
 
+==== `DummyVerifier`
+- Class Name: `tigase.socks5.verifiers.DummyVerifier`
+
+This accepts file transfers VIA SOCKS5 proxy from any user and does not check limitations against the database.
+[source,dsl]
+----
+socks5 () {
+    verifier (class: tigase.socks5.verifiers.DummyVerifier) {
+    }
+}
+----
+
 ==== `LimitsVerifier`
 - Class Name: `tigase.socks5.verifiers.LimitsVerifier`
 
 Uses the database to store limits and record the amount of data transferred VIA the proxy.
 
-=== Configuring limits
+===== Configuring limits
 Following properties are possible to be set for `LimitsVerifier`:
 [source,dsl]
 -----
@@ -84,7 +95,7 @@ Available parameters:
 
 NOTE: Low values can slow down file transfers, while high values can allow for users to exceed quotas.
 
-=== Individual Limits
+===== Individual Limits
 Using the default database schema in table tig_socks5_users limits can be specified for individual users.
 
 Value of the field _user_id_ denotes the scope of the limitation:
@@ -107,18 +118,6 @@ Socks5 database is setup in this manner:
 This example table shows that user@domain.com is limited to 3000MB per transfer whereas all users of domain.com are limited to a max file size of 500MB.
 This table will populate as users transfer files using the SOCKS5 proxy, once it begins population, you may edit it as necessary.
 A second database is setup tig_socks5_connections that records the connections and transmissions being made, however it does not need to be edited.
-
-==== `DummyVerifier`
-- Class Name: `tigase.socks5.verifiers.DummyVerifier`
-
-This accepts file transfers VIA SOCKS5 proxy from any user and does not check limitations against the database.
-[source,dsl]
-----
-socks5 () {
-    verifier (class: tigase.socks5.verifiers.DummyVerifier) {
-    }
-}
-----
 
 == Using a separate database
 To use separate database with Tigase Socks5 Proxy component you need to configure new `DataSource` in `dataSource` section.

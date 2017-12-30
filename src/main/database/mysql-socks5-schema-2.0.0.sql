@@ -20,9 +20,7 @@ create table if not exists tig_socks5_users (
 	transfer_limit_per_domain bigint default 0,
 
 	primary key (uid),
-	unique key sha1_user_id (sha1_user_id),
-	key user_id (user_id(765))
-
+	unique key sha1_user_id (sha1_user_id)
 )
 ENGINE=InnoDB default character set utf8 ROW_FORMAT=DYNAMIC;
 -- QUERY END:

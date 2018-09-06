@@ -57,8 +57,6 @@ public class Stream {
 
 	/**
 	 * Get bare JID of requester
-	 *
-	 * @param requester
 	 */
 	public JID getRequester() {
 		return requester;
@@ -75,8 +73,6 @@ public class Stream {
 
 	/**
 	 * Get bare JID of target
-	 *
-	 * @param requester
 	 */
 	public JID getTarget() {
 		return target;
@@ -84,8 +80,6 @@ public class Stream {
 
 	/**
 	 * Set bare JID of target
-	 *
-	 * @param requester
 	 */
 	public void setTarget(JID target) {
 		this.target = target;

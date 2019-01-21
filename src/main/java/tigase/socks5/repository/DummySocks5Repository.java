@@ -1,8 +1,6 @@
-/*
- * DummySocks5Repository.java
- *
- * Tigase Jabber/XMPP Server - SOCKS5 Proxy
- * Copyright (C) 2004-2017 "Tigase, Inc." <office@tigase.com>
+/**
+ * Tigase Socks5 Component - SOCKS5 proxy component for Tigase
+ * Copyright (C) 2011 Tigase, Inc. (office@tigase.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by

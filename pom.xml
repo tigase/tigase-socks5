@@ -38,8 +38,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://repository.tigase.org/git/socks5.git</connection>
-        <developerConnection>scm:git:https://repository.tigase.org/git/socks5.git</developerConnection>
+        <connection>scm:git:${scm_repo_base}/socks5.git</connection>
+        <developerConnection>scm:git:${scm_repo_base}/socks5.git</developerConnection>
         <url>https://projects.tigase.org/projects/socks5/repository</url>
         <tag>HEAD</tag>
     </scm>

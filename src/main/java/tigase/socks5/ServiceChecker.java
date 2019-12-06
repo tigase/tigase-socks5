@@ -1,4 +1,4 @@
-/**
+/*
  * Tigase Socks5 Component - SOCKS5 proxy component for Tigase
  * Copyright (C) 2011 Tigase, Inc. (office@tigase.com)
  *

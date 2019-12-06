@@ -1,4 +1,4 @@
-/**
+/*
  * Tigase Socks5 Component - SOCKS5 proxy component for Tigase
  * Copyright (C) 2011 Tigase, Inc. (office@tigase.com)
  *
@@ -15,7 +15,6 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-
 
 /*
 * To change this template, choose Tools | Templates

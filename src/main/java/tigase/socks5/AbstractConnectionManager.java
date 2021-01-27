@@ -26,6 +26,7 @@ import tigase.kernel.core.Kernel;
 import tigase.net.*;
 import tigase.server.AbstractMessageReceiver;
 import tigase.stats.StatisticsList;
+import tigase.util.common.TimerTask;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

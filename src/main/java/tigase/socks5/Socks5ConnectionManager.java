@@ -20,9 +20,9 @@ package tigase.socks5;
 //~--- non-JDK imports --------------------------------------------------------
 
 import tigase.stats.StatisticsList;
+import tigase.util.common.TimerTask;
 
 import java.io.IOException;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;

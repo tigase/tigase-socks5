@@ -9,7 +9,7 @@ To enable Tigase Socks5 Proxy component for Tigase XMPP Server, you need to acti
 
 **Simple configuration.**
 
-.. code:: dsl
+.. code:: text
 
    socks5 () {
        repository {
@@ -22,7 +22,7 @@ To enable Tigase Socks5 Proxy component for Tigase XMPP Server, you need to acti
 **``remote-addresses``**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: dsl
+.. code:: text
 
    proxy {
        'remote-addresses' = '192.168.1.205,20.255.13.190'
@@ -36,7 +36,7 @@ Port settings
 
 If socks5 is being used as a proxy, you may configure a specific ports for the proxy using the following line in config.tdsl:
 
-.. code:: dsl
+.. code:: text
 
    proxy {
        'connections' {
@@ -59,7 +59,7 @@ With that setup, it is possible to enable limits verifier by replacing entries r
 
 This accepts file transfers VIA SOCKS5 proxy from any user and does not check limitations against the database.
 
-.. code:: dsl
+.. code:: text
 
    socks5 () {
        verifier (class: tigase.socks5.verifiers.DummyVerifier) {
@@ -80,7 +80,7 @@ Configuring limits
 
 Following properties are possible to be set for ``LimitsVerifier``:
 
-.. code:: dsl
+.. code:: text
 
    proxy {
        'verifier-class' = 'tigase.socks5.verifiers.LimitsVerifier'
@@ -144,7 +144,7 @@ Using a separate database
 
 To use separate database with Tigase Socks5 Proxy component you need to configure new ``DataSource`` in ``dataSource`` section. Here we will use ``socks5-store`` as name of newly configured data source. Additionally you need to pass name of newly configured data source to ``dataSourceName`` property of ``default`` repository of Tigase Socks5 Proxy component.
 
-.. code:: dsl
+.. code:: text
 
    dataSource {
        socks5-store () {

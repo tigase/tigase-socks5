@@ -12,13 +12,13 @@ Installation
 
 Tigase SOCKS5 component comes built into the dist-max archives for Tigase XMPP server, and requires the component to be listed in config.tdsl file:
 
-.. code:: dsl
+.. code:: text
 
    proxy {}
 
 You will also need to decide if you wish to use database-based features or not. If you wish to simply run the socks5 proxy without features such as quotas, limits add the following line:
 
-.. code:: dsl
+.. code:: text
 
    proxy {
        'verifier-class' = 'tigase.socks5.verifiers.DummyVerifier'
@@ -71,7 +71,7 @@ Create New Database
 
 If you want to create a new database for the proxy component and use it as a separate socks5 database, create the database using the appropriate schema file in the database folder. Once this is created, add the following line to your config.tdsl folder.
 
-.. code:: dsl
+.. code:: text
 
    proxy {}
 

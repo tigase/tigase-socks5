@@ -3,27 +3,30 @@
 # This file is distributed under the same license as the TigaseDoc package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TigaseDoc \n"
+"Project-Id-Version: TigaseDoc\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-08-24 13:17-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2022-08-25 18:49+0000\n"
+"Last-Translator: Qian Luo <qian.luo@tigase.net>\n"
+"Language-Team: Chinese (Simplified) <http://translate.tigase.net/projects/"
+"tigase-socks5-documentation/tigase-socks5-documentation/zh_Hans/>\n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.11.2\n"
 "Generated-By: Babel 2.8.0\n"
 
 #: ../../Configuration.rst:2
 msgid "Configuration"
-msgstr ""
+msgstr "配置"
 
 #: ../../Configuration.rst:5
 msgid "Enabling proxy"
-msgstr ""
+msgstr "启用代理"
 
 #: ../../Configuration.rst:8
 msgid ""
@@ -33,14 +36,18 @@ msgid ""
 "to enforce any limits but will also work without a need of database to "
 "store informations about used bandwidth."
 msgstr ""
+"要为 Tigase XMPP Server 启用 Tigase Socks5 代理组件，您需要在 Tigase XMPP "
+"Server 配置文件（``etc/config.tdsl``）中激活 ``socks5`` 组件。在 simples 解决"
+"方案中，它可以在没有任何限制的情况下工作，但也可以在不需要数据库来存储有关已"
+"用带宽的信息的情况下工作。"
 
 #: ../../Configuration.rst:10
 msgid "**Simple configuration.**"
-msgstr ""
+msgstr "**简单配置。**"
 
 #: ../../Configuration.rst:23
 msgid "**``remote-addresses``**"
-msgstr ""
+msgstr "``remote-addresses``"
 
 #: ../../Configuration.rst:31
 msgid ""
@@ -49,20 +56,22 @@ msgid ""
 " address to allow external traffic to transfer files using the proxy to "
 "users on an internal network."
 msgstr ""
+"可通过 Socks5 代理访问的 IP 地址的逗号分隔列表。如果您要指定特定的路由器地址"
+"以允许外部流量使用代理将文件传输到内部网络上的用户，这将很有用。"
 
 #: ../../Configuration.rst:35
 msgid "Port settings"
-msgstr ""
+msgstr "端口设置"
 
 #: ../../Configuration.rst:37
 msgid ""
 "If socks5 is being used as a proxy, you may configure a specific ports "
 "for the proxy using the following line in config.tdsl:"
-msgstr ""
+msgstr "如果 socks5 被用作代理，您可以使用 config.tdsl 中的以下行为代理配置特定端口："
 
 #: ../../Configuration.rst:48
 msgid "Enabling limits"
-msgstr ""
+msgstr "启用限制"
 
 #: ../../Configuration.rst:50
 msgid ""
@@ -70,6 +79,8 @@ msgid ""
 " and related to Tigase Socks5 Proxy component from ``database`` "
 "directory. To do this, refer to the previous section."
 msgstr ""
+"要启用限制，您需要从 ``database`` 目录导入适合您的数据库并与 Tigase Socks5 "
+"代理组件相关的模式文件。为此，请参阅上一节。"
 
 #: ../../Configuration.rst:52
 msgid ""
@@ -78,42 +89,45 @@ msgid ""
 "following entries. This will use default database configured to use with "
 "Tigase XMPP Server."
 msgstr ""
+"通过该设置，可以通过将与 Tigase Socks5 "
+"代理组件配置相关的条目替换为以下条目来启用限制验证程序。这将使用配置为与 "
+"Tigase XMPP 服务器一起使用的默认数据库。"
 
 #: ../../Configuration.rst:56
 msgid "``DummyVerifier``"
-msgstr ""
+msgstr "``DummyVerifier``"
 
 #: ../../Configuration.rst:58
 msgid "Class Name: ``tigase.socks5.verifiers.DummyVerifier``"
-msgstr ""
+msgstr "类名： ``tigase.socks5.verifiers.DummyVerifier``"
 
 #: ../../Configuration.rst:60
 msgid ""
 "This accepts file transfers VIA SOCKS5 proxy from any user and does not "
 "check limitations against the database."
-msgstr ""
+msgstr "这接受来自任何用户的通过 SOCKS5 代理的文件传输，并且不检查对数据库的限制。"
 
 #: ../../Configuration.rst:71
 msgid "``LimitsVerifier``"
-msgstr ""
+msgstr "``LimitsVerifier``"
 
 #: ../../Configuration.rst:73
 msgid "Class Name: ``tigase.socks5.verifiers.LimitsVerifier``"
-msgstr ""
+msgstr "类名：``tigase.socks5.verifiers.LimitsVerifier``"
 
 #: ../../Configuration.rst:75
 msgid ""
 "Uses the database to store limits and record the amount of data "
 "transferred VIA the proxy."
-msgstr ""
+msgstr "使用数据库存储限制并记录通过代理传输的数据量。"
 
 #: ../../Configuration.rst:78
 msgid "Configuring limits"
-msgstr ""
+msgstr "配置限制"
 
 #: ../../Configuration.rst:81
 msgid "Following properties are possible to be set for ``LimitsVerifier``:"
-msgstr ""
+msgstr "可以为 ``LimitsVerifier`` 设置以下属性："
 
 #: ../../Configuration.rst:93
 msgid ""
@@ -123,10 +137,13 @@ msgid ""
 "and the 22nd, he only has 2MB left in his limit. On the 1st of the "
 "following month, his limit is reset to 10MB."
 msgstr ""
+"``LimitsVerifier`` 的参数将覆盖默认值。所有这些限制都基于每个日历月。例如，"
+"用户的所有传输限制为 10MB。如果他在 1 日和 22 日之间传输 8MB，"
+"那么他的限制中只剩下 2MB。在下个月的 1 日，他的限制被重置为 10MB。"
 
 #: ../../Configuration.rst:95
 msgid "Available parameters:"
-msgstr ""
+msgstr "可用参数："
 
 #: ../../Configuration.rst:97
 msgid ""
@@ -135,60 +152,63 @@ msgid ""
 "not. By default it is 1MB. (Low value can slow down file transfer while "
 "high value can allow to exceed quota)"
 msgstr ""
+"``transfer-update-quantization`` "
+"哪个值用于量化值以检查传输字节的值是否应在数据库中更新。默认为 1MB。 "
+"（低值可以减慢文件传输，而高值可以允许超过配额）"
 
 #: ../../Configuration.rst:99
 msgid "``global-limit`` - Transfer limit for all domains in MB per month."
-msgstr ""
+msgstr "``global-limit`` - 每月所有域的传输限制（以 MB 为单位）。"
 
 #: ../../Configuration.rst:101
 msgid "``instance-limit`` - Transfer limit for server instance in MB per month."
-msgstr ""
+msgstr "``instance-limit`` - 服务器实例的每月传输限制（以 MB 为单位）。"
 
 #: ../../Configuration.rst:103
 msgid ""
 "``default-domain-limit`` - The Default transfer limit per domain in MB "
 "per month."
-msgstr ""
+msgstr "``default-domain-limit`` - 每个域每月的默认传输限制 (MB)。"
 
 #: ../../Configuration.rst:105
 msgid ""
 "``default-user-limit`` - The default transfer limit per user in MB per "
 "month."
-msgstr ""
+msgstr "``default-user-limit`` - 每个用户每月的默认传输限制（以 MB 为单位）。"
 
 #: ../../Configuration.rst:107
 msgid ""
 "``default-file-limit`` - The default transfer limit per file in MB per "
 "month."
-msgstr ""
+msgstr "``default-file-limit`` - 每月每个文件的默认传输限制（以 MB 为单位）。"
 
 #: ../../Configuration.rst:111
 msgid ""
 "Low values can slow down file transfers, while high values can allow for "
 "users to exceed quotas."
-msgstr ""
+msgstr "低值可能会减慢文件传输速度，而高值可能会允许用户超过配额。"
 
 #: ../../Configuration.rst:114
 msgid "Individual Limits"
-msgstr ""
+msgstr "个人限制"
 
 #: ../../Configuration.rst:117
 msgid ""
 "Using the default database schema in table tig_socks5_users limits can be"
 " specified for individual users."
-msgstr ""
+msgstr "使用表 tig_socks5_users 中的默认数据库模式可以为单个用户指定限制。"
 
 #: ../../Configuration.rst:119
 msgid "Value of the field *user_id* denotes the scope of the limitation:"
-msgstr ""
+msgstr "*user_id* 字段的值表示限制的范围："
 
 #: ../../Configuration.rst:121
 msgid "*domain_name* defines limits for users which JIDs are within that domain;"
-msgstr ""
+msgstr "*domain_name* 为该域内的 JID 定义用户的限制；"
 
 #: ../../Configuration.rst:123
 msgid "*JID* of the user defines limit for this exact user."
-msgstr ""
+msgstr "用户的 *JID* 定义了这个确切用户的限制。"
 
 #: ../../Configuration.rst:125
 msgid ""
@@ -198,82 +218,86 @@ msgid ""
 "value for user in this table new row will be created during first "
 "transfer and limits for domain or global limits will be used."
 msgstr ""
+"大于 0 的限制值定义了一个精确值。如果值等于 "
+"0，限制不会被覆盖，而是使用更多的全局限制。如果值等于 -1，代理将禁止此用户的"
+"任何传输。如果此表中的用户没有值，则在首次传输期间将创建新行，并将使用域限制"
+"或全局限制。"
 
 #: ../../Configuration.rst:127
 msgid "Socks5 database is setup in this manner:"
-msgstr ""
+msgstr "Socks5 数据库以这种方式设置："
 
 #: ../../Configuration.rst:129
 msgid "Table 1. tig_socks5_users"
-msgstr ""
+msgstr "表 1. tig_socks5_users"
 
 #: ../../Configuration.rst:132
 msgid "uid"
-msgstr ""
+msgstr "uid"
 
 #: ../../Configuration.rst:132
 msgid "user_id"
-msgstr ""
+msgstr "user_id"
 
 #: ../../Configuration.rst:132
 msgid "sha1_user_id"
-msgstr ""
+msgstr "sha1_user_id"
 
 #: ../../Configuration.rst:132
 msgid "domain"
-msgstr ""
+msgstr "domain"
 
 #: ../../Configuration.rst:132
 msgid "sha1_domain"
-msgstr ""
+msgstr "sha1_domain"
 
 #: ../../Configuration.rst:132
 msgid "filesize_limit"
-msgstr ""
+msgstr "filesize_limit"
 
 #: ../../Configuration.rst:132
 msgid "transfer_limit_per_user"
-msgstr ""
+msgstr "transfer_limit_per_user"
 
 #: ../../Configuration.rst:132
 msgid "transfer_limit_per_domain"
-msgstr ""
+msgstr "transfer_limit_per_domain"
 
 #: ../../Configuration.rst:134
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ../../Configuration.rst:134
 msgid "user@domain.com"
-msgstr ""
+msgstr "user@domain.com"
 
 #: ../../Configuration.rst:134
 msgid "c35f2956d804e01ef2dec392ef3adae36289123f"
-msgstr ""
+msgstr "c35f2956d804e01ef2dec392ef3adae36289123f"
 
 #: ../../Configuration.rst:134 ../../Configuration.rst:136
 msgid "domain.com"
-msgstr ""
+msgstr "domain.com"
 
 #: ../../Configuration.rst:134 ../../Configuration.rst:136
 msgid "e1000db219f3268b0f02735342fe8005fd5a257a"
-msgstr ""
+msgstr "e1000db219f3268b0f02735342fe8005fd5a257a"
 
 #: ../../Configuration.rst:134 ../../Configuration.rst:136
 msgid "0"
-msgstr ""
+msgstr "0"
 
 #: ../../Configuration.rst:134
 msgid "3000"
-msgstr ""
+msgstr "3000"
 
 #: ../../Configuration.rst:136
 msgid "2"
-msgstr ""
+msgstr "2"
 
 #: ../../Configuration.rst:136
 msgid "500"
-msgstr ""
+msgstr "500"
 
 #: ../../Configuration.rst:139
 msgid ""
@@ -285,10 +309,15 @@ msgid ""
 "connections and transmissions being made, however it does not need to be "
 "edited."
 msgstr ""
+"此示例表显示 user@domain.com 每次传输的容量限制为 3000MB，而 domain.com "
+"的所有用户的最大文件容量限制为 500MB。此表将在用户使用 SOCKS5 "
+"代理传输文件时填充，一旦开始填充，您可以根据需要对其进行编辑。"
+"第二个数据库是设置 "
+"tig_socks5_connections，它记录了正在建立的连接和传输，但它不需要编辑。"
 
 #: ../../Configuration.rst:143
 msgid "Using a separate database"
-msgstr ""
+msgstr "使用单独的数据库"
 
 #: ../../Configuration.rst:145
 msgid ""
@@ -299,10 +328,14 @@ msgid ""
 "``dataSourceName`` property of ``default`` repository of Tigase Socks5 "
 "Proxy component."
 msgstr ""
+"要将单独的数据库与 Tigase Socks5 代理组件一起使用，您需要在 ``dataSource`` "
+"部分配置新的 ``DataSource``。在这里，我们将使用 ``socks5-store`` "
+"作为新配置的数据源的名称。此外，您需要将新配置的数据源的名称传递给 Tigase "
+"Socks5 代理组件的 ``default`` 存储库的 ``dataSourceName`` 属性。"
 
 #: ../../Overview.rst:2
 msgid "Welcome to Tigase Socks5 Proxy guide"
-msgstr ""
+msgstr "欢迎使用 Tigase Socks5 代理指南"
 
 #: ../../Overview.rst:4
 msgid ""
@@ -313,10 +346,14 @@ msgid ""
 "recording transfers between users - quotas and credits system "
 "implementation"
 msgstr ""
+"Tigase SOCKS5 组件允许根据 `XEP-0065 SOCKS5 Bytestreams <http://xmpp.org/"
+"extensions/xep-0065.html>`__ 通过 SOCKS5 "
+"代理进行文件传输。这允许一些有用的功能，例如： - 每个用户、"
+"域或全局的传输限制 - 记录用户之间的传输 - 配额和信用系统实施"
 
 #: ../../Overview.rst:7
 msgid "Overview"
-msgstr ""
+msgstr "概述"
 
 #: ../../Overview.rst:8
 msgid ""
@@ -326,10 +363,14 @@ msgid ""
 "support for Socks5 proxy for file transfers between XMPP client behind "
 "NATs to Tigase XMPP Server."
 msgstr ""
+"Tigase Socks5 代理是在 `XEP-0065: SOCKS5 Bytestreams, in section 6. Mediated "
+"Connection <https://xmpp.org/extensions/xep-0065.html#mediated:>`__ 中描述的 "
+"Socks5 代理的实现。中介连接Socks5 代理，用于在 NAT 后面的 XMPP 客户端到 "
+"Tigase XMPP 服务器之间传输文件。"
 
 #: ../../Overview.rst:11
 msgid "Installation"
-msgstr ""
+msgstr "安装"
 
 #: ../../Overview.rst:13
 msgid ""
@@ -337,40 +378,45 @@ msgid ""
 " XMPP server, and requires the component to be listed in config.tdsl "
 "file:"
 msgstr ""
+"Tigase SOCKS5 组件内置于 Tigase XMPP 服务器的 dist-max 档案中，"
+"并且要求该组件在 config.tdsl 文件中列出："
 
 #: ../../Overview.rst:19
 msgid ""
 "You will also need to decide if you wish to use database-based features "
 "or not. If you wish to simply run the socks5 proxy without features such "
 "as quotas, limits add the following line:"
-msgstr ""
+msgstr "您还需要决定是否要使用基于数据库的功能。如果您希望简单地运行 socks5 "
+"代理而不使用配额等功能，请添加以下行："
 
 #: ../../Overview.rst:27
 msgid ""
 "This will enable the SOCKS5 Proxy without any advanced features. If you "
 "wish to use those features, see the configuration section below."
-msgstr ""
+msgstr "这将启用没有任何高级功能的 SOCKS5 "
+"代理。如果您希望使用这些功能，请参阅下面的配置部分。"
 
 #: ../../Overview.rst:31
 msgid "Database Preparation"
-msgstr ""
+msgstr "数据库准备"
 
 #: ../../Overview.rst:33
 msgid ""
 "In order to use the more advanced features of the SOCKS5 Proxy Component,"
 " your database needs to be prepared with the proper schema prior to "
 "running the server."
-msgstr ""
+msgstr "为了使用 SOCKS5 "
+"代理组件的更高级功能，您的数据库需要在运行服务器之前准备好正确的模式。"
 
 #: ../../Overview.rst:35
 msgid ""
 "You may either edit an existing database, or create a new database for "
 "specific use with the Proxy."
-msgstr ""
+msgstr "您可以编辑现有数据库，也可以创建一个新数据库以用于代理的特定用途。"
 
 #: ../../Overview.rst:38
 msgid "Edit Existing Database"
-msgstr ""
+msgstr "编辑现有数据库"
 
 #: ../../Overview.rst:40
 msgid ""
@@ -378,28 +424,30 @@ msgid ""
 "DBSchemaLoader utility included with Tigase. The database folder contains"
 " the schema file for your type of database."
 msgstr ""
+"您可以使用 Tigase 附带的 DBSchemaLoader 实用程序将正确的架构添加到现有数据库"
+"中。数据库文件夹包含您的数据库类型的架构文件。"
 
 #: ../../Overview.rst:42
 msgid ""
 "First, backup your database before performing any actions and shut down "
 "Tigase XMPP Server."
-msgstr ""
+msgstr "首先，在执行任何操作之前备份您的数据库并关闭 Tigase XMPP 服务器。"
 
 #: ../../Overview.rst:44
 msgid "Then from the Tigase installation directory run the following command:"
-msgstr ""
+msgstr "然后从 Tigase 安装目录运行以下命令："
 
 #: ../../Overview.rst:50
 msgid "You should see the following dialogue"
-msgstr ""
+msgstr "您应该看到以下对话框"
 
 #: ../../Overview.rst:67
 msgid "One this process is complete, you may begin using SOCKS5 proxy component."
-msgstr ""
+msgstr "一旦这个过程完成了，你就可以开始使用SOCKS5代理组件了。"
 
 #: ../../Overview.rst:70
 msgid "Create New Database"
-msgstr ""
+msgstr "创建新数据库"
 
 #: ../../Overview.rst:72
 msgid ""
@@ -408,6 +456,9 @@ msgid ""
 "schema file in the database folder. Once this is created, add the "
 "following line to your config.tdsl folder."
 msgstr ""
+"如果要为代理组件创建新数据库并将其用作单独的 socks5 "
+"数据库，请使用数据库文件夹中的相应架构文件创建数据库。创建完成后，"
+"将以下行添加到您的 config.tdsl 文件夹。"
 
 #: ../../Overview.rst:78
 msgid ""
@@ -416,10 +467,13 @@ msgid ""
 "URL. For more options, check the database section of `this documentation "
 "<#databasePreperation>`__."
 msgstr ""
+"例如，mysql 数据库将具有这种类型的 URL：jdbc:mysql://localhost/"
+"SOCKS?user=root&password=root 来替换数据库 URL。有关更多选项，请查看 `本文档 "
+"<#databasePreperation>`__ 的数据库部分。"
 
 #: ../../Performance.rst:2
 msgid "Performance"
-msgstr ""
+msgstr "性能"
 
 #: ../../Performance.rst:4
 msgid ""
@@ -428,8 +482,10 @@ msgid ""
 "interface. All XMPP clients and Tigase XMPP Server used in test were "
 "running on the single machine."
 msgstr ""
+"Tigase Socks5 代理组件经过 100 次并发传输测试。"
+"组件在环回接口上处理的最大流量为 21,45MB/s。测试中使用的所有 XMPP 客户端和 "
+"Tigase XMPP 服务器都在单台机器上运行。"
 
 #: ../../index.rst:4
 msgid "Tigase Socks5 Proxy - Version 2.1.0"
-msgstr ""
-
+msgstr "Tigase Socks5 代理 - 版本 2.1.0"
